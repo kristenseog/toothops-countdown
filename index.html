@@ -1,0 +1,1269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToothOps Countdown</title>
+<meta name="description" content="Countdown lock screens that never go stale: every date is stamped with the days left on that day.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F3EF; --panel:#FFFFFF; --ink:#17171C; --muted:#696975; --line:#E3E1DA; --field:#F7F6F2;
+  --accent:#3B3BD6; --accent-ink:#FFFFFF; --stage:#E8E6DF; --ok:#16794C; --warn:#B45309;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C0D11; --panel:#14161C; --ink:#ECECF1; --muted:#9A9AA8; --line:#262833; --field:#0F1116;
+    --accent:#8B8CF8; --accent-ink:#0C0D11; --stage:#08090C; --ok:#4ADE80; --warn:#FBBF24;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C0D11; --panel:#14161C; --ink:#ECECF1; --muted:#9A9AA8; --line:#262833; --field:#0F1116;
+  --accent:#8B8CF8; --accent-ink:#0C0D11; --stage:#08090C; --ok:#4ADE80; --warn:#FBBF24;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 28px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand h1{font:700 18px/1.1 "Space Grotesk",Inter,sans-serif;margin:0;letter-spacing:-.01em}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.mark{width:34px;height:34px;flex:none}
+.app{display:grid;grid-template-columns:minmax(340px,470px) 1fr;align-items:start}
+.controls{padding:22px 24px 80px;display:flex;flex-direction:column;gap:14px;border-right:1px solid var(--line);min-width:0}
+.preview{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;background:var(--stage)}
+.stage{flex:1;min-height:0;display:grid;place-items:center;padding:28px;overflow:hidden}
+.previewbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 24px 18px;color:var(--muted);font-size:13px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.card h2{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.card h2 .sub{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500}
+.step{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--panel);font-size:12px;letter-spacing:0}
+label{display:block;font-size:13px;font-weight:600;margin:0 0 12px}
+.hint{font-weight:500;color:var(--muted)}
+input[type=text],input[type=date],input[type=datetime-local],input[type=time],select{
+  display:block;width:100%;margin-top:6px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--field);font-weight:500;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row2{display:grid;grid-template-columns:1.35fr 1fr;gap:10px}
+button{cursor:pointer;border:1px solid var(--line);background:var(--field);border-radius:10px;padding:9px 13px;font-weight:600}
+button:hover{border-color:var(--muted)}
+button.primary{width:100%;padding:14px;font-size:15px;background:var(--accent);color:var(--accent-ink);border-color:transparent}
+button.primary:hover{filter:brightness(1.08)}
+button.ghost{background:transparent}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.suggest{display:flex;align-items:center;gap:8px;margin:-4px 0 12px;font-size:12.5px;color:var(--muted)}
+.suggest button{padding:4px 10px;font-size:12px;border-radius:999px}
+.ms{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:6px;counter-reset:ms}
+.ms li{display:grid;grid-template-columns:20px 22px 128px minmax(0,1fr) 30px;gap:6px;align-items:center;counter-increment:ms}
+.ms li::before{content:counter(ms);font-size:12px;font-weight:700;color:var(--muted);text-align:center}
+.ms li input{margin:0}
+.ms li input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.ms li input[type=date],.ms li input[type=text]{padding:8px 9px;font-size:13.5px}
+.ms li.done input[type=text]{text-decoration:line-through;color:var(--muted)}
+.ms li .count{grid-column:4;font-size:11px;color:var(--warn);margin-top:-4px}
+.icon{padding:0;width:30px;height:30px;border-radius:8px;font-size:18px;line-height:1;background:transparent}
+.empty{color:var(--muted);font-size:13px;margin:0 0 12px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-bottom:14px;background:var(--field);border:1px solid var(--line);border-radius:12px}
+.seg button{border:0;background:transparent;text-align:left;padding:9px 10px;border-radius:9px}
+.seg button small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.themes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.theme{padding:6px 4px 8px;border-radius:12px;background:transparent;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px}
+.theme .sw{width:100%;aspect-ratio:9/15;border-radius:9px;border:1px solid rgba(0,0,0,.12)}
+.theme[aria-checked=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.file input{display:block;margin-top:6px;font-size:13px;max-width:100%}
+.bgrow{display:flex;gap:10px;align-items:center;margin-top:-4px}
+.bgrow label{flex:1;margin:0}
+.bgrow input[type=range]{width:100%}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:13.5px}
+.checks li{display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:start}
+.checks .i{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:12px;font-weight:800;color:#fff}
+.checks .ok .i{background:var(--ok)}
+.checks .no .i{background:var(--warn)}
+.checks small{display:block;color:var(--muted)}
+.score{margin-left:auto;font-size:12px;font-weight:700;letter-spacing:0;text-transform:none;padding:3px 9px;border-radius:999px;background:var(--field);border:1px solid var(--line);color:var(--ink)}
+.tip{font-size:12.5px;color:var(--muted);margin:8px 0 14px}
+.ics{display:grid;grid-template-columns:136px 1fr;gap:8px;align-items:end;margin-bottom:10px}
+.ics label{margin:0}
+details{border-top:1px solid var(--line);padding-top:10px;margin-top:12px}
+summary{cursor:pointer;font-weight:700;font-size:14px}
+.kit{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.kit h3{margin:0 0 6px;font-size:13px}
+textarea{display:block;width:100%;margin-top:6px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--field);font:14px/1.5 Inter,system-ui,sans-serif;resize:vertical;min-height:170px}
+.form{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px;counter-reset:f}
+.form>li{position:relative;padding-left:32px;counter-increment:f}
+.form>li::before{content:counter(f);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:7px;background:var(--field);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--muted)}
+.form>li.ok::before{content:"✓";background:var(--ok);border-color:var(--ok);color:#fff}
+.form .lbl{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+.form label{margin-bottom:8px}
+.cnt{float:right;font-weight:600;color:var(--muted)}
+.cnt.over{color:var(--warn)}
+.note{font-size:12.5px;color:var(--muted);margin:4px 0 8px}
+.inline{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.inline label{margin:0}
+.device.cover{box-shadow:0 24px 60px -20px rgba(0,0,0,.5)}
+.viewseg{display:inline-flex;gap:2px;padding:3px;border-radius:10px;background:var(--field);border:1px solid var(--line)}
+.viewseg button{border:0;background:transparent;padding:5px 10px;font-size:12.5px;border-radius:7px}
+.viewseg button[aria-pressed=true]{background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.kit pre{margin:0 0 6px;white-space:pre-wrap;word-break:break-word;font:12.5px/1.5 "JetBrains Mono",ui-monospace,monospace;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px;max-height:220px;overflow:auto}
+.device{position:relative;container-type:inline-size;overflow:hidden;background:#000;flex:none;
+  box-shadow:0 0 0 var(--bz,8px) #0b0b0d,0 0 0 calc(var(--bz,8px) + 1.5px) #3a3a42,0 30px 70px -20px rgba(0,0,0,.55)}
+.device canvas{display:block;width:100%;height:100%}
+.overlay{position:absolute;inset:0;pointer-events:none;color:var(--ol,#fff);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif}
+.overlay[hidden]{display:none}
+.phone .island{position:absolute;top:2.6cqw;left:50%;transform:translateX(-50%);width:30cqw;height:8.6cqw;border-radius:5cqw;background:#000}
+.phone .ol-date{position:absolute;top:15.5cqw;width:100%;text-align:center;font-size:4.6cqw;font-weight:600;opacity:.92}
+.phone .ol-time{position:absolute;top:19.2cqw;width:100%;text-align:center;font-size:24cqw;font-weight:700;line-height:1;letter-spacing:-.02em}
+.phone .ol-btn{position:absolute;bottom:6.5cqw;width:12.5cqw;height:12.5cqw;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.32);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.phone .ol-btn svg{width:5.4cqw;height:5.4cqw}
+.phone .ol-btn.l{left:11cqw}.phone .ol-btn.r{right:11cqw}
+.phone .ol-home{position:absolute;bottom:2cqw;left:50%;transform:translateX(-50%);width:34cqw;height:1.25cqw;border-radius:1cqw;background:var(--ol,#fff);opacity:.85}
+.desk .menubar{position:absolute;top:0;left:0;right:0;height:1.5cqw;background:rgba(255,255,255,.2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.desk .dock{position:absolute;bottom:.7cqw;left:50%;transform:translateX(-50%);width:42cqw;height:4.2cqw;border-radius:1.3cqw;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.3);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.toggle{display:flex;align-items:center;gap:8px;margin:0;font-weight:500;cursor:pointer}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--ink);color:var(--panel);padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;transition:.2s;pointer-events:none;z-index:9}
+#toast.show{opacity:1;transform:translateX(-50%)}
+body.render{background:#000}
+body.render canvas{display:block}
+@media (max-width:880px){
+  .top{padding:14px 16px}
+  .app{grid-template-columns:minmax(0,1fr)}
+  .preview{position:relative;height:auto;order:-1}
+  .stage{flex:none;height:66vh;padding:20px}
+  .controls{border-right:0;padding:16px 16px 60px}
+  .ms li{grid-template-columns:16px 20px 112px minmax(0,1fr) 28px;gap:5px}
+}
+@media (max-width:420px){ .row2{grid-template-columns:1fr} .themes{grid-template-columns:repeat(5,1fr);gap:5px} .theme{font-size:11px} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 34 34" aria-hidden="true">
+      <rect width="34" height="34" rx="9" fill="#0B1020"/>
+      <g fill="#6EF0D0"><rect x="6" y="7" width="6" height="6" rx="1.6" opacity=".35"/><rect x="14" y="7" width="6" height="6" rx="1.6" opacity=".35"/><rect x="22" y="7" width="6" height="6" rx="1.6" opacity=".35"/><rect x="6" y="15" width="6" height="6" rx="1.6" opacity=".35"/><rect x="14" y="15" width="6" height="6" rx="1.6" fill="#B49CFF" opacity="1"/><rect x="22" y="15" width="6" height="6" rx="1.6" opacity=".35"/><rect x="6" y="23" width="6" height="6" rx="1.6" opacity=".35"/><rect x="14" y="23" width="6" height="6" rx="1.6" opacity=".35"/><rect x="22" y="23" width="6" height="6" rx="1.6"/></g>
+    </svg>
+    <div><h1>ToothOps Countdown</h1><p>Lock screens that never go stale.</p></div>
+  </div>
+  <button id="reset" class="ghost">Reset example</button>
+</header>
+
+<main class="app">
+  <section class="controls" aria-label="Editor">
+    <div class="card">
+      <h2><span class="step">1</span>Your deadline</h2>
+      <label>Goal <span class="hint">(short and specific)</span><input type="text" id="goal" maxlength="48"></label>
+      <div class="suggest" id="suggest" hidden></div>
+      <div class="row2">
+        <label>Deadline<input type="datetime-local" id="deadline"></label>
+        <label>Started<input type="date" id="start"></label>
+      </div>
+      <label>Your why <span class="hint">(one line future-you needs to hear)</span><input type="text" id="why" maxlength="80"></label>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">2</span>The plan<span class="sub">worked backward from the deadline</span></h2>
+      <ol class="ms" id="milestones"></ol>
+      <p class="empty" id="msEmpty" hidden>No milestones yet. Add 3–6 checkpoints that lead to the deadline.</p>
+      <div class="btnrow">
+        <button id="addMs">+ Add milestone</button>
+        <button id="spaceMs" title="Spread unfinished milestones evenly between today and the deadline">Space evenly</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">3</span>Design</h2>
+      <div class="seg" role="group" aria-label="Layout">
+        <button id="layCal" aria-pressed="true">T-minus calendar<small>Never goes stale</small></button>
+        <button id="layClassic" aria-pressed="false">Big countdown<small>Bold number, refresh weekly</small></button>
+      </div>
+      <div class="themes" id="themes" role="radiogroup" aria-label="Style"></div>
+      <label>Screen<select id="device"></select></label>
+      <label class="file">Background image <span class="hint">(optional, try one you made in Gemini)</span><input type="file" id="bgfile" accept="image/*"></label>
+      <div class="bgrow" id="bgControls" hidden>
+        <label>Darken for legibility<input type="range" id="scrim" min="0" max="95"></label>
+        <button id="clearBg">Remove</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">4</span>Pre-flight check<span class="score" id="score"></span></h2>
+      <ul class="checks" id="checks"></ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">5</span>Export &amp; stay on track</h2>
+      <button class="primary" id="download">Download lock screen PNG</button>
+      <p class="tip">iPhone: save to Photos → Settings → Wallpaper → Add New → Photos. Turn off Perspective Zoom so nothing gets cropped.</p>
+      <div class="ics">
+        <label>Daily nudge<input type="time" id="remindAt"></label>
+        <button id="ics">Add reminders to calendar (.ics)</button>
+      </div>
+      <button id="copyPlan" style="width:100%">Copy plan as text</button>
+      <details>
+        <summary>Gemini prompt kit</summary>
+        <div class="kit" id="prompts"></div>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">6</span>Submit to Handshake<span class="score" id="formScore"></span></h2>
+      <p class="note" style="margin-top:-6px">Same order as the Handshake form. Run prompt 1 in Gemini first, because the description says you did.</p>
+      <ol class="form" id="form">
+        <li>
+          <div class="inline"><label>Project title<input type="text" id="ptitle" maxlength="80"></label><button id="copyTitle">Copy</button></div>
+        </li>
+        <li>
+          <span class="lbl">Upload file: your lock screen</span>
+          <button id="dlLock2" style="width:100%">Download lock screen PNG</button>
+        </li>
+        <li>
+          <span class="lbl">Cover: 3:2, 2400 × 1600</span>
+          <div class="btnrow"><button id="dlCover">Download cover</button><button id="viewCover">Preview cover</button></div>
+        </li>
+        <li>
+          <label>One thing you learned <span class="hint">(goes at the end of the description)</span><input type="text" id="learned" maxlength="140" placeholder="the real deadline is my first milestone, not the last day."></label>
+          <label>Description <span class="cnt" id="descCount">0/500</span><textarea id="desc" maxlength="500" rows="9"></textarea></label>
+          <p class="note">Answers the form’s question: your deadline, how Gemini split it into milestones, and one thing you learned. Edit it freely. No private details.</p>
+          <div class="btnrow"><button id="copyDesc">Copy description</button><button id="regenDesc">Rewrite from plan</button></div>
+        </li>
+        <li>
+          <span class="lbl">Turn on “Share to Showcase”, then Publish</span>
+          <p class="note">Only Showcase projects are entered in the challenge. Deadline: Nov 23, 11:59 PM PT.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="preview" aria-label="Preview">
+    <div class="stage" id="stage">
+      <div class="device phone" id="frame">
+        <canvas id="canvas" aria-label="Lock screen preview"></canvas>
+        <div class="overlay" id="overlay"></div>
+      </div>
+    </div>
+    <div class="previewbar" style="flex-wrap:wrap">
+      <div class="viewseg" role="group" aria-label="Preview"><button id="vLock" aria-pressed="true">Lock screen</button><button id="vCover" aria-pressed="false">Cover 3:2</button></div>
+      <label class="toggle"><input type="checkbox" id="showOverlay"> Show clock (preview only)</label>
+      <span id="sizeLabel"></span>
+    </div>
+  </section>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ============================== utilities ============================== */
+const P = new URLSearchParams(location.search);
+const RENDER = P.has('render');
+const KEY = 'toothops-countdown-v1';
+const DAY = 864e5;
+const pad = n => String(n).padStart(2, '0');
+const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseDate = s => { const r = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return r ? new Date(+r[1], +r[2] - 1, +r[3]) : null; };
+const parseDT = s => { const r = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(s || ''); return r ? new Date(+r[1], +r[2] - 1, +r[3], r[4] != null ? +r[4] : 23, r[5] != null ? +r[5] : 59) : null; };
+const diff = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY);
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const md = d => `${MON[d.getMonth()]} ${d.getDate()}`;
+const MD = d => md(d).toUpperCase();
+const longDate = d => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+const fullDate = d => d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+const time12 = d => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+const NOW = () => { const n = P.get('now'); return n ? (parseDT(n.length <= 10 ? n + 'T12:00' : n) || new Date()) : new Date(); };
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+function hexRgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(x => x + x).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+const rgba = (h, a) => { const [r, g, b] = hexRgb(h); return `rgba(${r},${g},${b},${a})`; };
+function lum(h) { const [r, g, b] = hexRgb(h).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; }
+const inkOn = h => lum(h) > 0.179 ? '#0B0B10' : '#FFFFFF';
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ============================== canvas helpers ============================== */
+function F(c, spec, size) { c.font = `${spec.style || 'normal'} ${spec.w || 400} ${Math.max(1, size).toFixed(1)}px ${spec.f}`; }
+function T(c, px) { if ('letterSpacing' in c) c.letterSpacing = (px || 0).toFixed(2) + 'px'; }
+function rr(c, x, y, w, h, r) { r = Math.max(0, Math.min(r, w / 2, h / 2)); c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function circle(c, x, y, r) { c.beginPath(); c.arc(x, y, Math.max(0, r), 0, Math.PI * 2); }
+function star(c, cx, cy, r, fill) { c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * 0.46 : r; c.lineTo(cx + Math.cos(a) * q, cy + Math.sin(a) * q); } c.closePath(); c.fillStyle = fill; c.fill(); }
+function check(c, cx, cy, r, color, lw) { c.beginPath(); c.moveTo(cx - r * 0.5, cy + r * 0.02); c.lineTo(cx - r * 0.14, cy + r * 0.38); c.lineTo(cx + r * 0.52, cy - r * 0.36); c.strokeStyle = color; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round'; c.stroke(); }
+function ellipsize(c, text, maxW) {
+  if (maxW <= 0) return '';
+  if (c.measureText(text).width <= maxW) return text;
+  let lo = 0, hi = text.length;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (c.measureText(text.slice(0, mid).trimEnd() + '…').width <= maxW) lo = mid; else hi = mid - 1; }
+  return text.slice(0, lo).trimEnd() + '…';
+}
+function wrap(c, text, maxW, maxLines) {
+  const words = text.split(/\s+/).filter(Boolean), lines = []; let cur = '';
+  for (const w of words) { const t = cur ? cur + ' ' + w : w; if (!cur || c.measureText(t).width <= maxW) cur = t; else { lines.push(cur); cur = w; } }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines) { const rest = lines.slice(maxLines - 1).join(' '); lines.length = maxLines - 1; lines.push(rest); }
+  return lines.map(l => ellipsize(c, l, maxW));
+}
+let GRAIN = null;
+function grainTile() {
+  if (GRAIN) return GRAIN;
+  const c = document.createElement('canvas'); c.width = c.height = 192;
+  const g = c.getContext('2d'), id = g.createImageData(192, 192), r = rng(11);
+  for (let i = 0; i < id.data.length; i += 4) { const v = (r() * 255) | 0; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; }
+  g.putImageData(id, 0, 0); return (GRAIN = c);
+}
+function grain(c, W, H, a) { c.save(); c.globalAlpha = a; c.globalCompositeOperation = 'overlay'; c.fillStyle = c.createPattern(grainTile(), 'repeat'); c.fillRect(0, 0, W, H); c.restore(); }
+function blobs(c, W, H, list) {
+  const M = Math.max(W, H); c.save(); c.globalCompositeOperation = 'lighter';
+  for (const [x, y, r, col, a] of list) { const g = c.createRadialGradient(x * W, y * H, 0, x * W, y * H, r * M); g.addColorStop(0, rgba(col, a)); g.addColorStop(0.55, rgba(col, a * 0.35)); g.addColorStop(1, rgba(col, 0)); c.fillStyle = g; c.fillRect(0, 0, W, H); }
+  c.restore();
+}
+
+/* ============================== themes ============================== */
+const THEMES = {
+  aurora: {
+    name: 'Aurora', dark: true,
+    swatch: 'radial-gradient(circle at 20% 15%,#1fb5a0 0,transparent 55%),radial-gradient(circle at 85% 30%,#6d4cff 0,transparent 55%),#050816',
+    bg: '#050816', text: '#F2F4FF', muted: 'rgba(226,231,255,0.66)', faint: 'rgba(226,231,255,0.16)',
+    accent: '#6EF0D0', phases: ['#7CC4FF', '#B49CFF', '#FF8FD1', '#FFD27A', '#9BF57A', '#5EEAD4'],
+    card: 'rgba(255,255,255,0.06)', cardStroke: 'rgba(255,255,255,0.13)', cellBase: 'rgba(5,8,22,0.5)', tint: 0.2, radius: 18,
+    align: 'center', eyebrow: 'COUNTDOWN TO',
+    num: { w: 700, f: '"Space Grotesk"', size: 330, track: -0.02 }, title: { w: 700, f: '"Space Grotesk"', size: 66, track: -0.01 },
+    body: '"Space Grotesk"', why: { w: 500, f: '"Space Grotesk"', size: 31, quote: true },
+    progress: 'dots', list: 'glass', clock: '#FFFFFF',
+    numFill: (c, y0, y1) => { const g = c.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#8DF3DC'); return g; },
+    numGlow: 'rgba(110,240,208,0.35)',
+    prompt: 'a dark, dreamy night sky with soft aurora ribbons in teal and violet, deep navy base'
+  },
+  sunset: {
+    name: 'Dusk', dark: true,
+    swatch: 'radial-gradient(circle at 85% 12%,#ff5c8a 0,transparent 55%),radial-gradient(circle at 10% 5%,#ffb36b 0,transparent 50%),linear-gradient(#1f0a2e,#3a1040 45%,#12051a)',
+    bg: '#16061F', text: '#FFF3EA', muted: 'rgba(255,236,224,0.68)', faint: 'rgba(255,236,224,0.16)',
+    accent: '#FFB36B', phases: ['#FF7A8A', '#E86BD8', '#A98BFF', '#7FD1FF', '#FFE0A8', '#9BE7C4'],
+    card: 'rgba(255,220,200,0.07)', cardStroke: 'rgba(255,220,200,0.16)', cellBase: 'rgba(22,6,31,0.45)', tint: 0.2, radius: 22,
+    align: 'center', eyebrow: 'COUNTDOWN TO',
+    num: { w: 400, f: '"Instrument Serif"', size: 330 }, title: { w: 400, style: 'italic', f: '"Instrument Serif"', size: 88, asc: 0.72 },
+    body: 'Inter', why: { w: 400, style: 'italic', f: '"Instrument Serif"', size: 40, quote: true },
+    progress: 'ring', list: 'glass', clock: '#FFF3EA',
+    prompt: 'a warm dusk sky fading from deep plum to coral and peach, soft glowing sun, gentle film grain'
+  },
+  paper: {
+    name: 'Paper', dark: false,
+    swatch: 'radial-gradient(circle,rgba(30,26,21,.25) 1px,transparent 1.5px) 0 0/8px 8px,#F1E9DA',
+    bg: '#F1E9DA', text: '#1E1A15', muted: 'rgba(30,26,21,0.6)', faint: 'rgba(30,26,21,0.16)',
+    accent: '#C2410C', phases: ['#2F6B4F', '#1F4E8C', '#9A3D7A', '#A16207', '#475569', '#0F766E'],
+    card: 'rgba(255,255,255,0.4)', cardStroke: 'rgba(30,26,21,0.12)', cellBase: 'rgba(255,252,245,0.8)', tint: 0.15, radius: 10,
+    align: 'center', eyebrow: 'COUNTING DOWN TO',
+    num: { w: 600, f: 'Fraunces', size: 330, track: -0.02 }, title: { w: 400, style: 'italic', f: 'Fraunces', size: 74 },
+    body: 'Inter', why: { w: 400, style: 'italic', f: 'Fraunces', size: 34, quote: true },
+    progress: 'dots', journal: true, list: 'ruled', clock: '#1E1A15',
+    prompt: 'a warm cream paper planner page with subtle ink textures, dot-grid, soft natural light'
+  },
+  poster: {
+    name: 'Poster', dark: false,
+    swatch: 'radial-gradient(circle at 85% 15%,#E5321B 0 32%,transparent 33%),#ECE8DF',
+    bg: '#ECE8DF', text: '#111111', muted: 'rgba(17,17,17,0.62)', faint: 'rgba(17,17,17,0.12)',
+    accent: '#E5321B', phases: ['#111111', '#1F5BD8', '#F2B705', '#0E9F6E', '#7A3FF2', '#555555'],
+    card: 'rgba(0,0,0,0)', cardStroke: 'rgba(0,0,0,0)', cellBase: '#ECE8DF', tint: 0.17, radius: 0,
+    align: 'left', eyebrow: 'COUNTDOWN TO',
+    num: { w: 400, f: 'Anton', size: 470 }, title: { w: 400, f: 'Anton', size: 96, upper: true, asc: 0.74, lh: 1.02 },
+    labelScale: 0.13,
+    body: 'Inter', why: { w: 700, f: 'Inter', size: 26, upper: true, track: 2, prefix: '— ' },
+    progress: 'bar', list: 'poster', clock: '#111111',
+    prompt: 'a bold Swiss-style poster with a big red circle, black and off-white geometry, lots of empty space'
+  },
+  terminal: {
+    name: 'Terminal', dark: true,
+    swatch: 'repeating-linear-gradient(#020502 0 3px,#071a0b 3px 4px),#020502',
+    bg: '#020502', text: '#C6FFC0', muted: 'rgba(150,255,150,0.58)', faint: 'rgba(120,255,120,0.16)',
+    accent: '#3DFF6E', phases: ['#5AD7FF', '#F5D76E', '#FF6E9C', '#C792EA', '#FFFFFF', '#FFA657'],
+    card: 'rgba(0,0,0,0)', cardStroke: 'rgba(0,0,0,0)', cellBase: 'rgba(2,5,2,0.8)', tint: 0.1, cellStroke: true, radius: 3,
+    align: 'left', eyebrow: '$ ./countdown --to', ebTrack: 0, lower: true, glow: true, cursor: true, prefix: '> ',
+    num: { w: 800, f: '"JetBrains Mono"', size: 290, track: -0.04 }, title: { w: 700, f: '"JetBrains Mono"', size: 54 },
+    body: '"JetBrains Mono"', why: { w: 400, f: '"JetBrains Mono"', size: 26, prefix: '// ' },
+    progress: 'ascii', list: 'mono', clock: '#C6FFC0',
+    numFill: () => '#3DFF6E', numGlow: 'rgba(61,255,110,0.55)',
+    prompt: 'a retro green-phosphor computer terminal glow, subtle scanlines, near-black background'
+  }
+};
+const THEME_ORDER = ['aurora', 'sunset', 'paper', 'poster', 'terminal'];
+
+const DEVICES = {
+  'iphone-std':   { label: 'iPhone 15 · 16', w: 1179, h: 2556 },
+  'iphone-pro':   { label: 'iPhone 16 Pro · 17 · 17 Pro', w: 1206, h: 2622 },
+  'iphone-plus':  { label: 'iPhone 15 Pro Max · 16 Plus', w: 1290, h: 2796 },
+  'iphone-max':   { label: 'iPhone 16 Pro Max · 17 Pro Max', w: 1320, h: 2868 },
+  'iphone-older': { label: 'iPhone 12 – 14', w: 1170, h: 2532 },
+  'android':      { label: 'Android (Pixel, Galaxy)', w: 1080, h: 2400 },
+  'desktop':      { label: 'Desktop 16:9 (1440p)', w: 2560, h: 1440 },
+  'macbook':      { label: 'MacBook Air / Pro 13–14″', w: 2560, h: 1664 }
+};
+
+const SUGGEST = [
+  [/exam|final|midterm|test|study|thesis|essay|paper|class|semester|boards|mcat|lsat|gre|bar exam|nclex|inbde|usmle|cert/i, 'paper', 'study deadlines'],
+  [/code|hack|ship|launch|app|deploy|portfolio|github|leetcode|internship|software|startup|demo/i, 'terminal', 'build & ship deadlines'],
+  [/trip|travel|vacation|flight|trek|beach|wedding|concert|festival|move|moving|graduat/i, 'sunset', 'trips & life moments'],
+  [/\$|save|saving|money|budget|debt|sales|marathon|race|5k|10k|gym|fitness|lbs|kg|lift/i, 'poster', 'money & fitness targets']
+];
+function suggestTheme(goal) { for (const [re, id, why] of SUGGEST) if (re.test(goal)) return { id, why }; return null; }
+
+/* ============================== model ============================== */
+function model(st, now) {
+  const today = startOfDay(now);
+  const deadline = parseDT(st.deadline) || new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30, 23, 59);
+  const dDay = startOfDay(deadline);
+  let start = parseDate(st.start) || today; if (start > dDay) start = dDay;
+  const total = Math.max(1, diff(start, dDay));
+  const elapsed = Math.min(total, Math.max(0, diff(start, today)));
+  const daysLeft = Math.max(0, diff(today, dDay));
+  const passed = now > deadline;
+  const all = (st.milestones || []).map(x => ({ label: String(x.label || '').trim(), date: parseDate(x.date), done: !!x.done }))
+    .filter(x => x.label && x.date).sort((a, b) => a.date - b.date);
+  const ms = all.filter(x => x.date <= dDay);
+  const nextIdx = ms.findIndex(x => !x.done);
+  const msByDay = new Map();
+  ms.forEach((x, i) => { x.i = i; x.dueIn = diff(today, x.date); x.left = diff(x.date, dDay); x.next = i === nextIdx; x.overdue = !x.done && x.dueIn < 0; if (!msByDay.has(iso(x.date))) msByDay.set(iso(x.date), x); });
+  const phaseIndex = d => { let k = 0; for (const x of ms) { if (x.date < d) k++; else break; } return k; };
+  return { now, today, deadline, dDay, start, total, elapsed, daysLeft, passed, pct: elapsed / total, ms, all, nextIdx, msByDay, phaseIndex,
+    doneCount: ms.filter(x => x.done).length, goal: (st.goal || '').trim() || 'My deadline', why: (st.why || '').trim() };
+}
+
+/* ============================== backgrounds ============================== */
+const BG = {
+  aurora(c, t, W, H, s) {
+    c.fillStyle = t.bg; c.fillRect(0, 0, W, H);
+    blobs(c, W, H, [[0.08, 0.06, 0.62, '#14b8a6', 0.5], [0.95, 0.16, 0.55, '#7c3aed', 0.5], [0.5, -0.04, 0.4, '#22d3ee', 0.2], [0.1, 0.98, 0.6, '#1d4ed8', 0.32], [0.98, 0.9, 0.42, '#a855f7', 0.2]]);
+    const r = rng(42);
+    for (let i = 0; i < 170; i++) { const x = r() * W, y = r() * H * 0.75, rad = (0.5 + r() * 1.7) * s; c.fillStyle = `rgba(255,255,255,${(0.12 + r() * 0.55).toFixed(2)})`; circle(c, x, y, rad); c.fill(); }
+    const v = c.createLinearGradient(0, 0, 0, H); v.addColorStop(0, rgba(t.bg, 0)); v.addColorStop(0.3, rgba(t.bg, 0.25)); v.addColorStop(0.6, rgba(t.bg, 0.5)); v.addColorStop(1, rgba(t.bg, 0.35));
+    c.fillStyle = v; c.fillRect(0, 0, W, H); grain(c, W, H, 0.07);
+  },
+  sunset(c, t, W, H) {
+    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1F0A2E'); g.addColorStop(0.32, '#3A1040'); g.addColorStop(0.65, '#24092C'); g.addColorStop(1, '#12051A');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    blobs(c, W, H, [[0.88, 0.08, 0.55, '#FF5C8A', 0.42], [0.08, 0.02, 0.5, '#FFB36B', 0.32], [0.5, 1.05, 0.6, '#FF7A59', 0.26], [0.2, 0.55, 0.35, '#8B5CF6', 0.12]]);
+    grain(c, W, H, 0.08);
+  },
+  paper(c, t, W, H, s) {
+    c.fillStyle = t.bg; c.fillRect(0, 0, W, H);
+    const sp = 46 * s; c.fillStyle = 'rgba(30,26,21,0.12)';
+    for (let y = sp * 0.5; y < H; y += sp) for (let x = (W % sp) / 2; x < W; x += sp) { circle(c, x, y, 2 * s); c.fill(); }
+    const M = Math.max(W, H), v = c.createRadialGradient(W / 2, H * 0.45, M * 0.25, W / 2, H * 0.45, M * 0.75);
+    v.addColorStop(0, 'rgba(120,85,40,0)'); v.addColorStop(1, 'rgba(120,85,40,0.2)'); c.fillStyle = v; c.fillRect(0, 0, W, H);
+    grain(c, W, H, 0.12);
+  },
+  poster(c, t, W, H, s, port, m) {
+    c.fillStyle = t.bg; c.fillRect(0, 0, W, H);
+    const [cx, cy, r] = port ? [W * 0.82, H * 0.15, W * 0.44] : [W * 0.025, H * 0.03, H * 0.36];
+    c.fillStyle = t.accent; circle(c, cx, cy, r); c.fill();
+    c.strokeStyle = 'rgba(17,17,17,0.07)'; c.lineWidth = 2 * s;
+    for (const fx of [0.25, 0.5, 0.75]) { c.beginPath(); c.moveTo(W * fx, 0); c.lineTo(W * fx, H); c.stroke(); }
+    c.save(); F(c, { w: 800, f: 'Inter' }, 19 * s); T(c, 6 * s); c.fillStyle = 'rgba(17,17,17,0.5)';
+    c.translate(W - 38 * s, port ? H * 0.86 : H * 0.9); c.rotate(-Math.PI / 2); c.textAlign = 'left';
+    c.fillText(`DEADLINE ${MD(m.deadline)} ${m.deadline.getFullYear()} — ${m.goal.toUpperCase()}`.slice(0, 64), 0, 0);
+    c.restore(); T(c, 0);
+    grain(c, W, H, 0.08);
+  },
+  terminal(c, t, W, H, s) {
+    c.fillStyle = t.bg; c.fillRect(0, 0, W, H);
+    const M = Math.max(W, H), g = c.createRadialGradient(W / 2, H * 0.5, 0, W / 2, H * 0.5, M * 0.65);
+    g.addColorStop(0, 'rgba(20,90,35,0.38)'); g.addColorStop(1, 'rgba(20,90,35,0)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+    c.fillStyle = 'rgba(0,0,0,0.3)'; const step = Math.max(3, 5 * s); for (let y = 0; y < H; y += step) c.fillRect(0, y, W, step * 0.4);
+    const v = c.createRadialGradient(W / 2, H / 2, M * 0.3, W / 2, H / 2, M * 0.75); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
+    c.fillStyle = v; c.fillRect(0, 0, W, H); grain(c, W, H, 0.05);
+  }
+};
+function drawBackground(c, t, m, W, H, s, port, st, img) {
+  c.save();
+  if (img) {
+    const r = Math.max(W / img.naturalWidth, H / img.naturalHeight), w = img.naturalWidth * r, h = img.naturalHeight * r;
+    c.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+    const a = (st.scrim ?? 55) / 100, g = c.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, rgba(t.bg, a * 0.3)); g.addColorStop(0.27, rgba(t.bg, a * 0.62)); g.addColorStop(0.45, rgba(t.bg, a * 0.92)); g.addColorStop(1, rgba(t.bg, a));
+    c.fillStyle = g; c.fillRect(0, 0, W, H); grain(c, W, H, 0.05);
+  } else BG[t.id](c, t, W, H, s, port, m);
+  c.restore();
+}
+
+/* ============================== shared blocks ============================== */
+function drawHeader(c, t, m, box, y, s) {
+  const center = t.align === 'center', x = center ? box.x + box.w / 2 : box.x;
+  c.textAlign = center ? 'center' : 'left';
+  const eb = 26 * s;
+  F(c, { w: 700, f: t.body }, eb); T(c, (t.ebTrack ?? 6) * s); c.fillStyle = t.muted;
+  c.fillText(t.eyebrow, x, y + eb * 0.8); T(c, 0);
+  const h0 = eb * 0.8 + 26 * s, base = t.title.size * s;
+  let text = t.title.upper ? m.goal.toUpperCase() : m.goal; if (t.prefix) text = t.prefix + text;
+  let size = base, lines = null;
+  const room = box.w - (t.cursor ? base * 0.8 : 0);
+  for (let k = 0; k < 7; k++) { size = base * (1 - k * 0.04); F(c, t.title, size); T(c, (t.title.track || 0) * size); if (c.measureText(text).width <= room) { lines = [text]; break; } }
+  if (!lines) { size = base * 0.86; F(c, t.title, size); T(c, (t.title.track || 0) * size); lines = wrap(c, text, room, 2); }
+  const lh = size * (t.title.lh || 1.08), asc = size * (t.title.asc || 0.78);
+  c.fillStyle = t.text;
+  if (t.glow) { c.shadowColor = rgba(t.accent, 0.55); c.shadowBlur = 22 * s; }
+  lines.forEach((ln, i) => c.fillText(ln, x, y + h0 + asc + i * lh));
+  c.shadowBlur = 0;
+  if (t.cursor) { const lw = c.measureText(lines[lines.length - 1]).width, cx = (center ? x + lw / 2 : x + lw) + size * 0.18; c.fillStyle = t.accent; c.fillRect(cx, y + h0 + asc - size * 0.72 + (lines.length - 1) * lh, size * 0.5, size * 0.84); }
+  T(c, 0);
+  return h0 + asc + (lines.length - 1) * lh + size * 0.24;
+}
+function deadlineText(t, m) {
+  const s = `due ${longDate(m.deadline)} · ${time12(m.deadline)}`;
+  return t.lower ? s.toLowerCase() : s.toUpperCase();
+}
+function measureWhy(c, t, m, box, s) {
+  if (!m.why) return { h: 0 };
+  const size = t.why.size * s; F(c, t.why, size); T(c, (t.why.track || 0) * s);
+  let text = m.why; if (t.why.quote) text = `“${text}”`; if (t.why.prefix) text = t.why.prefix + text; if (t.why.upper) text = text.toUpperCase();
+  const lines = wrap(c, text, box.w, 2); T(c, 0);
+  return { h: lines.length * size * 1.32, lines, size };
+}
+function drawWhy(c, t, m, box, y, s, w) {
+  if (!w.h) return;
+  F(c, t.why, w.size); T(c, (t.why.track || 0) * s); c.fillStyle = t.muted;
+  const center = t.align === 'center'; c.textAlign = center ? 'center' : 'left';
+  const x = center ? box.x + box.w / 2 : box.x;
+  w.lines.forEach((ln, i) => c.fillText(ln, x, y + w.size * 0.95 + i * w.size * 1.32));
+  T(c, 0); c.textAlign = 'left';
+}
+function pickRows(ms, next, n) { if (ms.length <= n) return ms; let st = next < 0 ? ms.length - n : Math.max(0, next - 1); st = Math.min(st, ms.length - n); return ms.slice(st, st + n); }
+const DUMMY = document.createElement('canvas').getContext('2d');
+
+/* ============================== T-MINUS CALENDAR layout ============================== */
+function drawEvHeader(c, t, m, box, y, s) {
+  let h = drawHeader(c, t, m, box, y, s);
+  const sz = 25 * s, center = t.align === 'center';
+  F(c, { w: 700, f: t.body }, sz); T(c, (t.lower ? 0 : 4) * s); c.fillStyle = t.dueColor || t.accent; c.textAlign = center ? 'center' : 'left';
+  c.fillText(deadlineText(t, m), center ? box.x + box.w / 2 : box.x, y + h + 18 * s + sz * 0.8); T(c, 0);
+  return h + 18 * s + sz * 0.8 + 6 * s;
+}
+function drawCell(c, t, m, d, from, x, y, w, h, R, s) {
+  const inR = d >= from && d <= m.dDay, ds = Math.max(14 * s, h * 0.165);
+  if (!inR) {
+    F(c, { w: 500, f: t.body }, ds); c.textAlign = 'left'; c.fillStyle = t.faint;
+    c.fillText(String(d.getDate()), x + w * 0.1, y + ds + h * 0.07); return;
+  }
+  if (c !== DUMMY && +d === +m.today) m.todayRect = { x, y, w, h };
+  const left = diff(d, m.dDay), pi = m.phaseIndex(d);
+  const col = pi >= m.ms.length ? t.accent : t.phases[pi % t.phases.length];
+  const ms = m.msByDay.get(iso(d)), dl = left === 0, solid = !!ms || dl, fill = dl ? t.accent : col;
+  rr(c, x, y, w, h, R);
+  if (solid) { c.fillStyle = fill; c.fill(); }
+  else {
+    c.fillStyle = t.cellBase; c.fill(); c.fillStyle = rgba(col, t.tint); c.fill();
+    if (t.cellStroke) { c.strokeStyle = rgba(col, 0.5); c.lineWidth = 1.5 * s; c.stroke(); }
+  }
+  const fg = solid ? inkOn(fill) : t.text;
+  const first = d.getDate() === 1 || +d === +from;
+  let lab = first ? `${MON[d.getMonth()]} ${d.getDate()}` : String(d.getDate());
+  if (t.lower) lab = lab.toLowerCase(); else if (first) lab = lab.toUpperCase();
+  F(c, { w: 600, f: t.body }, ds); c.textAlign = 'left'; c.fillStyle = solid ? rgba(fg, 0.78) : t.muted;
+  c.fillText(lab, x + w * 0.1, y + ds + h * 0.07);
+  F(c, t.num, h * 0.46); T(c, 0); c.textAlign = 'center'; c.fillStyle = fg;
+  if (t.glow && !solid) { c.shadowColor = rgba(col, 0.5); c.shadowBlur = 10 * s; }
+  c.fillText(String(left), x + w / 2, y + h * 0.87); c.shadowBlur = 0;
+  const br = Math.min(h, w) * 0.105, bx = x + w - br - w * 0.09, by = y + br + h * 0.09;
+  if (dl) star(c, bx, by, br * 1.35, fg);
+  else if (ms) {
+    if (ms.done) check(c, bx, by, br * 1.1, fg, 3 * s);
+    else { circle(c, bx, by, br); c.lineWidth = 2 * s; c.strokeStyle = fg; c.stroke(); F(c, { w: 700, f: t.body }, br * 1.25); c.textAlign = 'center'; c.fillStyle = fg; c.fillText(String(ms.i + 1), bx, by + br * 0.44); }
+  }
+}
+function drawCalendar(c, t, m, box, y, s, maxH) {
+  const from = m.today > m.start ? m.today : m.start;
+  if (from > m.dDay) return 0;
+  const first = addDays(from, -from.getDay()), last = addDays(m.dDay, 6 - m.dDay.getDay());
+  const weeks = Math.round((diff(first, last) + 1) / 7);
+  const capS = 20 * s, capH = capS + 22 * s, wkS = 19 * s, wkH = wkS + 16 * s;
+  const gap = Math.max(5 * s, box.w * 0.009), cw = (box.w - gap * 6) / 7, avail = maxH - capH - wkH;
+  const minH = 50 * s, bandH = 36 * s;
+  let ch = Math.min(cw * 0.86, (avail - gap * (weeks - 1)) / weeks);
+  let show = [...Array(weeks).keys()], skipped = 0;
+  if (ch < minH) {
+    const fit = Math.max(2, Math.floor((avail - bandH + gap) / (minH + gap)));
+    if (fit < weeks) { ch = Math.max(30 * s, (avail - bandH - gap * (fit - 1)) / fit); show = [...Array(fit - 1).keys(), weeks - 1]; skipped = weeks - fit; }
+  }
+  if (ch < 24 * s) return 0;
+  c.textAlign = 'left'; F(c, { w: 700, f: t.body }, capS); T(c, (t.lower ? 0 : 3) * s);
+  c.fillStyle = t.muted; c.fillText(t.lower ? '// find today' : 'FIND TODAY', box.x, y + capS);
+  c.textAlign = 'right'; c.fillStyle = t.accent; c.fillText(t.lower ? 'big number = days left' : 'BIG NUMBER = DAYS LEFT', box.x + box.w, y + capS); T(c, 0);
+  const wk = t.lower ? ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  F(c, { w: 700, f: t.body }, wkS); c.fillStyle = t.muted; c.textAlign = 'center';
+  wk.forEach((d, k) => c.fillText(d, box.x + k * (cw + gap) + cw / 2, y + capH + wkS));
+  let yy = y + capH + wkH;
+  const R = Math.min(t.radius * s, ch * 0.22);
+  show.forEach((w, idx) => {
+    if (skipped && idx === show.length - 1) {
+      F(c, { w: 600, f: t.body }, 19 * s); T(c, 3 * s); c.fillStyle = t.muted; c.textAlign = 'center';
+      c.fillText(t.lower ? `... ${skipped} more weeks ...` : `· · ·  ${skipped} MORE WEEK${skipped === 1 ? '' : 'S'}  · · ·`, box.x + box.w / 2, yy + bandH * 0.55 - gap / 2); T(c, 0);
+      yy += bandH;
+    }
+    const ws = addDays(first, w * 7);
+    for (let k = 0; k < 7; k++) drawCell(c, t, m, addDays(ws, k), from, box.x + k * (cw + gap), yy, cw, ch, R, s);
+    yy += ch + gap;
+  });
+  return yy - gap - y;
+}
+const LEG = { cap: 42, row: 58 };
+function legendH(m, s, maxRows) { const n = Math.min(m.ms.length, maxRows); return n ? (LEG.cap + n * LEG.row) * s : 0; }
+function drawLegend(c, t, m, box, y, s, maxH) {
+  const capS = 20 * s, capH = LEG.cap * s, rowH = LEG.row * s;
+  const n = Math.min(m.ms.length, Math.floor((maxH - capH) / rowH)); if (n <= 0) return 0;
+  const rows = pickRows(m.ms, m.nextIdx, n), L = box.x, R = box.x + box.w;
+  c.textAlign = 'left'; F(c, { w: 700, f: t.body }, capS); T(c, (t.lower ? 0 : 3) * s); c.fillStyle = t.muted;
+  c.fillText(t.lower ? '// plan, worked backward' : 'THE PLAN · WORKED BACKWARD', L, y + capS);
+  c.textAlign = 'right'; c.fillText(t.lower ? `${m.doneCount}/${m.ms.length} done` : `${m.doneCount}/${m.ms.length} DONE`, R, y + capS); T(c, 0);
+  let ry = y + capH;
+  rows.forEach(x => {
+    const cy = ry + rowH / 2, col = t.phases[x.i % t.phases.length];
+    if (x.next) { rr(c, L - 12 * s, ry + 3 * s, box.w + 24 * s, rowH - 6 * s, Math.min(14, t.radius) * s); c.fillStyle = rgba(t.accent, t.dark ? 0.13 : 0.12); c.fill(); }
+    const cs = 34 * s; rr(c, L, cy - cs / 2, cs, cs, Math.min(9, t.radius * 0.5) * s); c.fillStyle = col; c.fill();
+    const fg = inkOn(col);
+    if (x.done) check(c, L + cs / 2, cy, cs * 0.42, fg, 3.4 * s);
+    else { F(c, { w: 700, f: t.body }, 19 * s); c.textAlign = 'center'; c.fillStyle = fg; c.fillText(String(x.i + 1), L + cs / 2, cy + 7 * s); }
+    c.textAlign = 'left'; F(c, { w: 600, f: t.body }, 23 * s); T(c, (t.lower ? 0 : 1.5) * s); c.fillStyle = t.muted;
+    c.fillText(t.lower ? md(x.date).toLowerCase() : MD(x.date), L + cs + 18 * s, cy + 8 * s); T(c, 0);
+    c.textAlign = 'right'; F(c, { w: 700, f: t.body }, 22 * s); T(c, 1.5 * s);
+    const rt = x.next ? (t.lower ? `next · t-${x.left}` : `NEXT · T–${x.left}`) : (t.lower ? `t-${x.left}` : `T–${x.left}`);
+    c.fillStyle = x.next ? (t.dark ? t.accent : t.text) : t.muted; c.fillText(rt, R, cy + 8 * s); const rw = c.measureText(rt).width; T(c, 0);
+    const lx = L + cs + 18 * s + 108 * s; F(c, { w: x.next ? 700 : 500, f: t.body }, 29 * s); c.textAlign = 'left';
+    c.fillStyle = x.done ? t.muted : t.text; const lab = ellipsize(c, x.label, R - lx - rw - 20 * s); c.fillText(lab, lx, cy + 10 * s);
+    if (x.done) c.fillRect(lx, cy + 0.5 * s, c.measureText(lab).width, 2.5 * s);
+    ry += rowH;
+  });
+  return capH + rows.length * rowH;
+}
+function calendarPortrait(c, t, m, W, H, s) {
+  const box = { x: 80 * s, w: W - 160 * s }, top = H * 0.3, bottom = H * 0.885;
+  const run = (cx, y0) => {
+    let y = y0; y += drawEvHeader(cx, t, m, box, y, s); y += 38 * s;
+    const why = measureWhy(cx, t, m, box, s), wh = why.h ? why.h + 30 * s : 0, lh = legendH(m, s, 6), lg = lh ? lh + 34 * s : 0;
+    y += drawCalendar(cx, t, m, box, y, s, bottom - y - lg - wh);
+    if (lh) { y += 34 * s; y += drawLegend(cx, t, m, box, y, s, bottom - y - wh); }
+    if (why.h) { y += 30 * s; drawWhy(cx, t, m, box, y, s, why); y += why.h; }
+    return y - y0;
+  };
+  const tot = run(DUMMY, top); run(c, top + Math.max(0, bottom - top - tot) * 0.3);
+}
+function calendarLandscape(c, t, m, W, H, s) {
+  const tl = { ...t, align: 'left', dueColor: t.id === 'poster' ? t.text : undefined }, left = { x: W * 0.065, w: W * 0.33 }, right = { x: W * 0.445, w: W * 0.49 };
+  const top = H * 0.11, bottom = H * 0.88;
+  const runL = (cx, y0) => {
+    const sl = s * 1.18;
+    let y = y0; y += drawEvHeader(cx, tl, m, left, y, s * 1.3); y += 60 * s;
+    const why = measureWhy(cx, tl, m, left, sl), wh = why.h ? why.h + 44 * s : 0;
+    if (m.ms.length) y += drawLegend(cx, tl, m, left, y, sl, bottom - top - (y - y0) - wh);
+    if (why.h) { y += 44 * s; drawWhy(cx, tl, m, left, y, sl, why); y += why.h; }
+    return y - y0;
+  };
+  const runR = (cx, y0) => drawCalendar(cx, tl, m, right, y0, s, bottom - top);
+  const hl = runL(DUMMY, top), hr = runR(DUMMY, top);
+  runL(c, top + Math.max(0, (bottom - top - hl) / 2)); runR(c, top + Math.max(0, (bottom - top - hr) / 2));
+}
+
+/* ============================== CLASSIC layout ============================== */
+function drawHeroRow(c, t, m, box, y, s, k) {
+  const center = t.align === 'center', num = String(m.daysLeft);
+  let l1, l2;
+  if (m.passed) { l1 = 'DEADLINE'; l2 = 'REACHED'; } else if (m.daysLeft === 0) { l1 = 'DUE'; l2 = 'TODAY'; } else { l1 = m.daysLeft === 1 ? 'DAY' : 'DAYS'; l2 = 'LEFT'; }
+  if (t.lower) { l1 = l1.toLowerCase(); l2 = l2.toLowerCase(); }
+  const sub1 = `until ${longDate(m.deadline)}`, sub2 = `at ${time12(m.deadline)}`;
+  let N = t.num.size * s * k, numW, blockW, ls, ss, gap;
+  const measure = () => {
+    F(c, t.num, N); T(c, (t.num.track || 0) * N); numW = c.measureText(num).width; T(c, 0);
+    ls = N * (t.labelScale || 0.15); ss = Math.max(24 * s, N * 0.08); gap = N * 0.07;
+    F(c, { w: 800, f: t.body }, ls); T(c, ls * 0.08); const lw = Math.max(c.measureText(l1).width, c.measureText(l2).width); T(c, 0);
+    F(c, { w: 500, f: t.body }, ss); blockW = Math.max(lw, c.measureText(sub1).width, c.measureText(sub2).width);
+  };
+  measure();
+  while (numW + gap + blockW > box.w && N > 100 * s) { N *= 0.94; measure(); }
+  const x0 = center ? box.x + (box.w - numW - gap - blockW) / 2 : box.x;
+  F(c, t.num, N); T(c, (t.num.track || 0) * N);
+  const mt = c.measureText(num), asc = mt.actualBoundingBoxAscent || N * 0.72, base = y + asc;
+  c.textAlign = 'left'; c.fillStyle = t.numFill ? t.numFill(c, y, base) : t.text;
+  if (t.numGlow) { c.shadowColor = t.numGlow; c.shadowBlur = N * 0.12; }
+  c.fillText(num, x0, base); c.shadowBlur = 0; T(c, 0);
+  const bx = x0 + numW + gap, s1b = base - ss * 1.3;
+  F(c, { w: 500, f: t.body }, ss); c.fillStyle = t.muted; c.fillText(sub2, bx, base); c.fillText(sub1, bx, s1b);
+  F(c, { w: 800, f: t.body }, ls); T(c, ls * 0.08); c.fillStyle = t.accent;
+  const l2b = s1b - ss - ls * 0.35; c.fillText(l2, bx, l2b); c.fillText(l1, bx, l2b - ls * 1.0); T(c, 0);
+  return asc + N * 0.03;
+}
+function drawHeroRing(c, t, m, box, y, s, k) {
+  const R = Math.min(box.w * 0.4, 232 * s * k), lw = 13 * s, cx = box.x + box.w / 2, cy = y + R + lw;
+  const g = c.createRadialGradient(cx, cy, R * 0.2, cx, cy, R * 2.2);
+  g.addColorStop(0, 'rgba(255,140,90,0.32)'); g.addColorStop(0.5, 'rgba(255,92,138,0.1)'); g.addColorStop(1, 'rgba(255,92,138,0)');
+  c.fillStyle = g; c.fillRect(cx - R * 2.3, cy - R * 2.3, R * 4.6, R * 4.6);
+  c.lineWidth = lw; c.strokeStyle = t.faint; circle(c, cx, cy, R); c.stroke();
+  const a0 = -Math.PI / 2, a1 = a0 + Math.PI * 2 * Math.max(0.004, m.pct);
+  let st = t.accent; if (c.createConicGradient) { st = c.createConicGradient(a0, cx, cy); st.addColorStop(0, t.phases[0]); st.addColorStop(Math.max(0.02, m.pct), t.accent); st.addColorStop(1, t.accent); }
+  c.strokeStyle = st; c.lineCap = 'round'; c.beginPath(); c.arc(cx, cy, R, a0, a1); c.stroke(); c.lineCap = 'butt';
+  m.ms.forEach(x => {
+    const f = diff(m.start, x.date) / m.total; if (f < 0 || f > 1) return; const a = a0 + Math.PI * 2 * f, px = cx + Math.cos(a) * R, py = cy + Math.sin(a) * R;
+    circle(c, px, py, 9 * s); if (x.done) { c.fillStyle = t.accent; c.fill(); } else { c.fillStyle = t.bg; c.fill(); c.lineWidth = 3.5 * s; c.strokeStyle = x.next ? t.text : t.muted; c.stroke(); }
+  });
+  const ex = cx + Math.cos(a1) * R, ey = cy + Math.sin(a1) * R; c.shadowColor = t.accent; c.shadowBlur = 24 * s; circle(c, ex, ey, 13 * s); c.fillStyle = '#FFFFFF'; c.fill(); c.shadowBlur = 0;
+  const ns = R * 0.95; F(c, t.num, ns); const asc = c.measureText(String(m.daysLeft)).actualBoundingBoxAscent || ns * 0.7;
+  const ls = 24 * s, gh = asc + 26 * s + ls, base = cy - gh / 2 + asc;
+  c.textAlign = 'center'; c.fillStyle = t.text; c.fillText(String(m.daysLeft), cx, base);
+  F(c, { w: 700, f: t.body }, ls); T(c, 6 * s); c.fillStyle = t.accent;
+  c.fillText(m.passed ? 'DEADLINE REACHED' : m.daysLeft === 0 ? 'DUE TODAY' : m.daysLeft === 1 ? 'DAY LEFT' : 'DAYS LEFT', cx, base + 26 * s + ls * 0.8); T(c, 0);
+  let yy = cy + R + lw + 54 * s;
+  F(c, { w: 500, f: t.body }, 30 * s); c.fillStyle = t.muted; c.fillText(`until ${longDate(m.deadline)} · ${time12(m.deadline)}`, cx, yy);
+  yy += 42 * s; F(c, { w: 700, f: t.body }, 22 * s); T(c, 4 * s); c.fillStyle = t.accent; c.fillText(`${Math.round(m.pct * 100)}% OF THE WAY THERE`, cx, yy); T(c, 0);
+  return yy - y + 8 * s;
+}
+const drawHero = (c, t, m, box, y, s, k) => t.progress === 'ring' ? drawHeroRing(c, t, m, box, y, s, k) : drawHeroRow(c, t, m, box, y, s, k);
+function drawDots(c, t, m, box, y, s, maxH) {
+  const capS = 22 * s, capH = capS + 20 * s, n = m.total + 1, areaH = maxH - capH;
+  let p = 72 * s, cols = 1, rows = 1;
+  for (; p > 7 * s; p -= s) { cols = Math.max(1, Math.floor(box.w / p)); rows = Math.ceil(n / cols); if (rows * p <= areaH) break; }
+  cols = Math.ceil(n / rows);
+  const gw = cols * p, gx = t.align === 'center' ? box.x + (box.w - gw) / 2 : box.x;
+  F(c, { w: 700, f: t.body }, capS); T(c, 4 * s); c.fillStyle = t.muted;
+  c.textAlign = 'left'; c.fillText(`DAY ${m.elapsed + 1} OF ${n}`, gx, y + capS);
+  c.textAlign = 'right'; c.fillStyle = t.accent; c.fillText(`${Math.round(m.pct * 100)}% THERE`, gx + gw, y + capS); T(c, 0);
+  const gy = y + capH, r = p * 0.3, msMap = new Map();
+  m.ms.forEach(x => { const i = diff(m.start, x.date); if (i >= 0 && i < n) msMap.set(i, x); });
+  for (let i = 0; i < n; i++) {
+    const cx = gx + (i % cols) * p + p / 2, cy = gy + Math.floor(i / cols) * p + p / 2;
+    if (i === n - 1) { star(c, cx, cy, r * 1.55, t.accent); continue; }
+    if (i === m.elapsed) { circle(c, cx, cy, r * 1.9); c.fillStyle = rgba(t.accent, 0.22); c.fill(); circle(c, cx, cy, r * 1.1); c.fillStyle = t.accent; c.fill(); continue; }
+    const x = msMap.get(i);
+    if (x) { const col = t.phases[x.i % t.phases.length]; circle(c, cx, cy, r * 1.05); if (x.done) { c.fillStyle = col; c.fill(); } else { c.lineWidth = p * 0.09; c.strokeStyle = col; c.stroke(); } continue; }
+    if (i < m.elapsed) {
+      if (t.journal) { const q = r * 0.75; c.beginPath(); c.moveTo(cx - q, cy - q); c.lineTo(cx + q, cy + q); c.moveTo(cx + q, cy - q); c.lineTo(cx - q, cy + q); c.strokeStyle = t.text; c.lineWidth = p * 0.07; c.lineCap = 'round'; c.stroke(); c.lineCap = 'butt'; }
+      else { circle(c, cx, cy, r * 0.8); c.fillStyle = rgba(t.text.length === 7 ? t.text : '#FFFFFF', 0.85); c.fill(); }
+    } else { circle(c, cx, cy, r * 0.75); c.fillStyle = t.faint; c.fill(); }
+  }
+  return capH + rows * p;
+}
+function drawBar(c, t, m, box, y, s) {
+  const capS = 26 * s, bh = 40 * s;
+  F(c, { w: 800, f: 'Inter' }, capS); T(c, 3 * s); c.fillStyle = t.text;
+  c.textAlign = 'left'; c.fillText(`DAY ${m.elapsed + 1} / ${m.total + 1}`, box.x, y + capS);
+  c.textAlign = 'right'; c.fillStyle = t.accent; c.fillText(`${Math.round(m.pct * 100)}% DONE`, box.x + box.w, y + capS); T(c, 0);
+  const by = y + capS + 22 * s;
+  c.fillStyle = t.faint; c.fillRect(box.x, by, box.w, bh);
+  c.fillStyle = t.accent; c.fillRect(box.x, by, Math.max(6 * s, box.w * m.pct), bh);
+  m.ms.forEach(x => { const f = diff(m.start, x.date) / m.total; if (f < 0 || f > 1) return; c.fillStyle = t.text; c.fillRect(box.x + box.w * f - 2 * s, by - 12 * s, 4 * s, bh + 24 * s); });
+  const tx = box.x + box.w * m.pct; c.beginPath(); c.moveTo(tx, by + bh + 6 * s); c.lineTo(tx - 13 * s, by + bh + 26 * s); c.lineTo(tx + 13 * s, by + bh + 26 * s); c.closePath(); c.fillStyle = t.text; c.fill();
+  return capS + 22 * s + bh + 30 * s;
+}
+function drawAscii(c, t, m, box, y, s) {
+  const size = 30 * s; F(c, { w: 700, f: t.body }, size); c.textAlign = 'left';
+  const pct = ` ${String(Math.round(m.pct * 100)).padStart(3)}%`, bw = c.measureText('[').width, pw = c.measureText(pct).width;
+  const inner = box.w - bw * 2 - pw, cells = Math.max(10, Math.floor(inner / (size * 0.42))), cw = inner / cells, filled = Math.round(cells * m.pct);
+  c.fillStyle = t.text; c.fillText('[', box.x, y + size); c.fillText(']', box.x + bw + inner, y + size);
+  c.shadowColor = rgba(t.accent, 0.6); c.shadowBlur = 14 * s;
+  for (let i = 0; i < cells; i++) { c.fillStyle = i < filled ? t.accent : t.faint; c.fillRect(box.x + bw + i * cw + cw * 0.12, y + size * 0.12, cw * 0.76, size * 0.86); }
+  c.shadowBlur = 0; c.fillStyle = t.accent; c.fillText(pct, box.x + bw * 2 + inner, y + size);
+  F(c, { w: 400, f: t.body }, 23 * s); c.fillStyle = t.muted;
+  c.fillText(`elapsed ${m.elapsed}d · remaining ${m.daysLeft}d · ${m.ms.length - m.doneCount} checkpoints left`, box.x, y + size + 46 * s);
+  return size + 52 * s;
+}
+const drawProgress = (c, t, m, box, y, s, maxH) => t.progress === 'dots' ? drawDots(c, t, m, box, y, s, maxH) : t.progress === 'bar' ? drawBar(c, t, m, box, y, s) : t.progress === 'ascii' ? drawAscii(c, t, m, box, y, s) : 0;
+const dueTxt = x => x.done ? 'DONE' : x.dueIn === 0 ? 'TODAY' : x.dueIn < 0 ? `${-x.dueIn}D LATE` : `IN ${x.dueIn}D`;
+function drawGlass(c, t, m, box, y, s, maxH) {
+  const pad = 30 * s, headH = 56 * s, rowH = 86 * s;
+  const n = Math.min(m.ms.length, Math.floor((maxH - pad * 2 - headH) / rowH)); if (n <= 0) return 0;
+  const rows = pickRows(m.ms, m.nextIdx, n), h = pad * 2 + headH + rows.length * rowH - 6 * s;
+  rr(c, box.x, y, box.w, h, 36 * s); c.fillStyle = t.card; c.fill(); c.lineWidth = 2 * s; c.strokeStyle = t.cardStroke; c.stroke();
+  const L = box.x + pad, R = box.x + box.w - pad;
+  F(c, { w: 700, f: t.body }, 22 * s); T(c, 5 * s); c.fillStyle = t.muted;
+  c.textAlign = 'left'; c.fillText('THE PLAN', L, y + pad + 22 * s); c.textAlign = 'right'; c.fillText(`${m.doneCount}/${m.ms.length} DONE`, R, y + pad + 22 * s); T(c, 0);
+  let ry = y + pad + headH;
+  rows.forEach((x, i) => {
+    const cy = ry + rowH / 2 - 3 * s, col = t.phases[x.i % t.phases.length], ix = L + 16 * s;
+    if (x.next) { rr(c, box.x + 12 * s, ry - 2 * s, box.w - 24 * s, rowH - 8 * s, 22 * s); c.fillStyle = rgba(t.accent, 0.12); c.fill(); }
+    if (x.done) { circle(c, ix, cy, 16 * s); c.fillStyle = col; c.fill(); check(c, ix, cy, 16 * s, inkOn(col), 4 * s); }
+    else if (x.next) { circle(c, ix, cy, 15 * s); c.strokeStyle = t.accent; c.lineWidth = 4 * s; c.stroke(); circle(c, ix, cy, 6 * s); c.fillStyle = t.accent; c.fill(); }
+    else { circle(c, ix, cy, 15 * s); c.strokeStyle = rgba(col, 0.8); c.lineWidth = 3 * s; c.stroke(); }
+    c.textAlign = 'left'; F(c, { w: 600, f: t.body }, 23 * s); T(c, 2 * s); c.fillStyle = t.muted; c.fillText(MD(x.date), L + 54 * s, cy + 8 * s); T(c, 0);
+    let pillW = 0;
+    if (x.next) {
+      const pt = dueTxt(x); F(c, { w: 700, f: t.body }, 20 * s); T(c, 2 * s); pillW = c.measureText(pt).width + 30 * s; const ph = 40 * s;
+      rr(c, R - pillW, cy - ph / 2, pillW, ph, ph / 2); c.fillStyle = t.accent; c.fill(); c.fillStyle = inkOn(t.accent); c.textAlign = 'center'; c.fillText(pt, R - pillW / 2, cy + 7 * s); T(c, 0); c.textAlign = 'left';
+    }
+    const lx = L + 54 * s + 120 * s; F(c, { w: x.next ? 600 : 500, f: t.body }, 31 * s); c.fillStyle = x.done ? t.muted : t.text;
+    const lab = ellipsize(c, x.label, R - lx - (pillW ? pillW + 16 * s : 0)); c.fillText(lab, lx, cy + 11 * s);
+    if (x.done) c.fillRect(lx, cy + 1 * s, c.measureText(lab).width, 2.5 * s);
+    if (i < rows.length - 1 && !x.next && !rows[i + 1].next) { c.fillStyle = t.faint; c.fillRect(L + 54 * s, ry + rowH - 5 * s, R - L - 54 * s, 1.5 * s); }
+    ry += rowH;
+  });
+  return h;
+}
+function drawRuled(c, t, m, box, y, s, maxH) {
+  const headH = 66 * s, rowH = 80 * s, n = Math.min(m.ms.length, Math.floor((maxH - headH - 4 * s) / rowH)); if (n <= 0) return 0;
+  const rows = pickRows(m.ms, m.nextIdx, n), L = box.x, R = box.x + box.w;
+  c.textAlign = 'left'; F(c, { w: 600, style: 'italic', f: 'Fraunces' }, 40 * s); c.fillStyle = t.text; c.fillText('The plan', L, y + 38 * s);
+  c.textAlign = 'right'; F(c, { w: 600, f: 'Inter' }, 19 * s); T(c, 4 * s); c.fillStyle = t.muted; c.fillText('WORKED BACKWARD', R, y + 35 * s); T(c, 0);
+  let ry = y + headH;
+  rows.forEach(x => {
+    c.fillStyle = t.faint; c.fillRect(L, ry, box.w, 2 * s);
+    const by = ry + rowH * 0.64;
+    c.textAlign = 'left'; F(c, { w: 400, style: 'italic', f: 'Fraunces' }, 31 * s); c.fillStyle = x.next ? t.accent : t.muted; c.fillText(md(x.date), L, by);
+    let rw = 0;
+    if (x.next) { const rt = x.dueIn === 0 ? 'today' : x.dueIn < 0 ? `${-x.dueIn} days late` : `in ${x.dueIn} day${x.dueIn === 1 ? '' : 's'}`; F(c, { w: 400, style: 'italic', f: 'Fraunces' }, 29 * s); rw = c.measureText(rt).width + 20 * s; c.textAlign = 'right'; c.fillStyle = t.accent; c.fillText(rt, R, by); c.textAlign = 'left'; }
+    if (x.done) { check(c, R - 16 * s, by - 10 * s, 16 * s, t.accent, 4 * s); rw = 48 * s; }
+    const lx = L + 140 * s; F(c, { w: x.next ? 600 : 500, f: 'Inter' }, 31 * s); c.fillStyle = x.done ? t.muted : t.text;
+    const lab = ellipsize(c, x.label, R - lx - rw); c.fillText(lab, lx, by);
+    if (x.done) c.fillRect(lx, by - 10 * s, c.measureText(lab).width, 2.5 * s);
+    ry += rowH;
+  });
+  c.fillStyle = t.faint; c.fillRect(L, ry, box.w, 2 * s);
+  return headH + rows.length * rowH + 4 * s;
+}
+function drawMono(c, t, m, box, y, s, maxH) {
+  const size = 29 * s, rowH = size * 1.75, headH = size * 1.9, n = Math.min(m.ms.length, Math.floor((maxH - headH) / rowH)); if (n <= 0) return 0;
+  const rows = pickRows(m.ms, m.nextIdx, n), L = box.x, R = box.x + box.w;
+  c.textAlign = 'left'; F(c, { w: 400, f: t.body }, size * 0.88); c.fillStyle = t.muted; c.fillText(`$ cat plan.txt   # ${m.doneCount}/${m.ms.length} done`, L, y + size);
+  let ry = y + headH;
+  rows.forEach(x => {
+    const by = ry + size, mark = x.done ? '[x]' : x.next ? '[>]' : x.overdue ? '[!]' : '[ ]';
+    F(c, { w: x.next ? 800 : 400, f: t.body }, size); c.fillStyle = x.done ? t.muted : x.next ? t.accent : t.text;
+    if (x.next) { c.shadowColor = rgba(t.accent, 0.6); c.shadowBlur = 16 * s; }
+    const pre = `${mark} ${md(x.date).toLowerCase().padEnd(6)}  `; c.fillText(pre, L, by); const pw = c.measureText(pre).width;
+    let rw = 0; if (x.next) { const rt = `<- ${x.dueIn < 0 ? (-x.dueIn) + 'd late' : x.dueIn === 0 ? 'today' : x.dueIn + 'd'}`; rw = c.measureText(rt).width + 18 * s; c.textAlign = 'right'; c.fillText(rt, R, by); c.textAlign = 'left'; }
+    c.fillText(ellipsize(c, x.label.toLowerCase(), R - L - pw - rw), L + pw, by);
+    c.shadowBlur = 0; ry += rowH;
+  });
+  return headH + rows.length * rowH;
+}
+function drawPosterList(c, t, m, box, y, s, maxH) {
+  const headH = 76 * s, rowH = 88 * s, n = Math.min(m.ms.length, Math.floor((maxH - headH) / rowH)); if (n <= 0) return 0;
+  const rows = pickRows(m.ms, m.nextIdx, n), L = box.x, R = box.x + box.w;
+  c.textAlign = 'left'; F(c, { w: 400, f: 'Anton' }, 52 * s); c.fillStyle = t.text; c.fillText('THE PLAN', L, y + 52 * s);
+  c.textAlign = 'right'; F(c, { w: 800, f: 'Inter' }, 21 * s); T(c, 3 * s); c.fillText(`${m.doneCount}/${m.ms.length} DONE`, R, y + 48 * s); T(c, 0);
+  let ry = y + headH;
+  rows.forEach(x => {
+    if (x.next) { c.fillStyle = t.accent; c.fillRect(L - 16 * s, ry, box.w + 32 * s, rowH); }
+    c.fillStyle = t.text; c.fillRect(L, ry, box.w, 4 * s);
+    const fg = x.next ? '#FFFFFF' : x.done ? t.muted : t.text, by = ry + rowH * 0.66;
+    c.textAlign = 'left'; F(c, { w: 400, f: 'Anton' }, 44 * s); c.fillStyle = fg; c.fillText(pad(x.i + 1), L, by + 3 * s);
+    c.textAlign = 'right'; F(c, { w: 700, f: 'Inter' }, 21 * s); T(c, 2 * s); const dt = x.next ? `${MD(x.date)} · ${dueTxt(x)}` : MD(x.date); c.fillText(dt, R, by); const dw = c.measureText(dt).width; T(c, 0);
+    c.textAlign = 'left'; F(c, { w: 800, f: 'Inter' }, 28 * s); const lx = L + 80 * s; const lab = ellipsize(c, x.label.toUpperCase(), R - lx - dw - 24 * s); c.fillText(lab, lx, by);
+    if (x.done) c.fillRect(lx, by - 10 * s, c.measureText(lab).width, 3 * s);
+    ry += rowH;
+  });
+  return headH + rows.length * rowH;
+}
+const drawList = (c, t, m, box, y, s, maxH) => ({ glass: drawGlass, ruled: drawRuled, mono: drawMono, poster: drawPosterList })[t.list](c, t, m, box, y, s, maxH);
+function classicPortrait(c, t, m, W, H, s) {
+  const box = { x: 92 * s, w: W - 184 * s }, top = H * 0.305, bottom = H * 0.88;
+  const run = (cx, y0) => {
+    let y = y0; y += drawHeader(cx, t, m, box, y, s); y += 36 * s; y += drawHero(cx, t, m, box, y, s, 1); y += 48 * s;
+    if (t.progress !== 'ring') { y += drawProgress(cx, t, m, box, y, s, 150 * s); y += 48 * s; }
+    const why = measureWhy(cx, t, m, box, s), wh = why.h ? why.h + 36 * s : 0;
+    y += drawList(cx, t, m, box, y, s, bottom - y - wh);
+    if (why.h) { y += 36 * s; drawWhy(cx, t, m, box, y, s, why); y += why.h; }
+    return y - y0;
+  };
+  const tot = run(DUMMY, top); run(c, top + Math.max(0, bottom - top - tot) * 0.3);
+}
+function classicLandscape(c, t, m, W, H, s) {
+  const tl = { ...t, align: t.progress === 'ring' ? 'center' : 'left' }, left = { x: W * 0.07, w: W * 0.42 }, right = { x: W * 0.55, w: W * 0.38 };
+  const top = H * 0.12, bottom = H * 0.88;
+  const runL = (cx, y0) => { let y = y0; y += drawHeader(cx, tl, m, left, y, s * 1.1); y += 40 * s; y += drawHero(cx, tl, m, left, y, s, 1.15); if (t.progress !== 'ring') { y += 56 * s; y += drawProgress(cx, tl, m, left, y, s, 190 * s); } return y - y0; };
+  const runR = (cx, y0) => { let y = y0; const why = measureWhy(cx, tl, m, right, s), wh = why.h ? why.h + 40 * s : 0; y += drawList(cx, tl, m, right, y, s, bottom - top - wh); if (why.h) { y += 40 * s; drawWhy(cx, tl, m, right, y, s, why); y += why.h; } return y - y0; };
+  const hl = runL(DUMMY, top), hr = runR(DUMMY, top);
+  runL(c, top + Math.max(0, (bottom - top - hl) / 2)); runR(c, top + Math.max(0, (bottom - top - hr) / 2));
+}
+
+/* ============================== render entry ============================== */
+function renderLockscreen(c, W, H, st, img, now) {
+  const t = { ...(THEMES[st.theme] || THEMES.aurora), id: THEMES[st.theme] ? st.theme : 'aurora' };
+  const m = model(st, now), port = H >= W, s = port ? W / 1179 : Math.min(W / 2560, H / 1440);
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H); c.textBaseline = 'alphabetic'; T(c, 0); c.shadowBlur = 0;
+  drawBackground(c, t, m, W, H, s, port, st, img);
+  const cal = st.layout !== 'classic';
+  (cal ? (port ? calendarPortrait : calendarLandscape) : (port ? classicPortrait : classicLandscape))(c, t, m, W, H, s);
+  return m;
+}
+
+/* ============================== cover (3:2 showcase image) ============================== */
+const COVER = { w: 2400, h: 1600 };
+const ICON_FLASH = 'M8 2h8v4l-2 4v12h-4V10L8 6z M12 13v2';
+const ICON_CAM = 'M4 7h3l2-3h6l2 3h3v13H4z M16 13a4 4 0 1 1-8 0a4 4 0 1 1 8 0';
+function renderCover(c, W, H, st, img, now) {
+  const id = THEMES[st.theme] ? st.theme : 'aurora', t = { ...THEMES[id], id };
+  const m = model(st, now), s = H / 1440, ev = st.layout !== 'classic';
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H); c.textBaseline = 'alphabetic'; T(c, 0); c.shadowBlur = 0;
+  drawBackground(c, t, m, W, H, s, false, st, img);
+
+  // phone with the real lock screen inside
+  const dev = DEVICES['iphone-pro'], scr = document.createElement('canvas'); scr.width = dev.w; scr.height = dev.h;
+  const sm = renderLockscreen(scr.getContext('2d'), dev.w, dev.h, st, img, now);
+  const ph = H * 0.9, pw = ph * dev.w / dev.h, px = W * 0.935 - pw, py = (H - ph) / 2, bz = pw * 0.034, R = pw * 0.135;
+  c.save(); c.shadowColor = 'rgba(0,0,0,0.5)'; c.shadowBlur = 90 * s; c.shadowOffsetY = 36 * s;
+  rr(c, px - bz, py - bz, pw + bz * 2, ph + bz * 2, R + bz); c.fillStyle = '#0B0B0E'; c.fill(); c.restore();
+  rr(c, px - bz, py - bz, pw + bz * 2, ph + bz * 2, R + bz); c.lineWidth = 3 * s; c.strokeStyle = '#46464F'; c.stroke();
+  c.save(); rr(c, px, py, pw, ph, R); c.clip(); c.drawImage(scr, px, py, pw, ph);
+  const k = pw / 100, clock = img ? '#FFFFFF' : t.clock, sys = '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Helvetica Neue", Arial, sans-serif';
+  rr(c, px + pw / 2 - 15 * k, py + 2.6 * k, 30 * k, 8.6 * k, 4.3 * k); c.fillStyle = '#000'; c.fill();
+  c.textAlign = 'center'; c.fillStyle = clock;
+  c.font = `600 ${(4.6 * k).toFixed(1)}px ${sys}`; c.globalAlpha = 0.92;
+  c.fillText(now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }), px + pw / 2, py + 19.9 * k); c.globalAlpha = 1;
+  c.font = `700 ${(24 * k).toFixed(1)}px ${sys}`; c.fillText('9:41', px + pw / 2, py + 39.4 * k);
+  [[px + 17.25 * k, ICON_FLASH], [px + pw - 17.25 * k, ICON_CAM]].forEach(([bx, d]) => {
+    const by = py + ph - 12.75 * k; circle(c, bx, by, 6.25 * k); c.fillStyle = 'rgba(0,0,0,0.34)'; c.fill();
+    const q = 5.4 * k / 24; c.save(); c.translate(bx - 12 * q, by - 12 * q); c.scale(q, q); c.strokeStyle = '#FFFFFF'; c.lineWidth = 2; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(new Path2D(d)); c.restore();
+  });
+  rr(c, px + pw / 2 - 17 * k, py + ph - 3.25 * k, 34 * k, 1.25 * k, 0.6 * k); c.fillStyle = clock; c.globalAlpha = 0.85; c.fill(); c.globalAlpha = 1;
+  c.restore();
+
+  // callout: today's cell
+  let calloutL = px - bz - 60 * s;
+  if (ev && sm.todayRect) {
+    const sc = pw / dev.w, r = sm.todayRect, rx = px + r.x * sc, ry = py + r.y * sc, rw = r.w * sc, rh = r.h * sc, pd = 7 * s;
+    const label = t.lower ? `today = ${sm.daysLeft} days left` : `TODAY = ${sm.daysLeft} DAYS LEFT`;
+    F(c, { w: 800, f: t.body }, 25 * s); T(c, (t.lower ? 0 : 3) * s);
+    const pillH = 62 * s, pillW = c.measureText(label).width + 50 * s, pr = px - bz - 64 * s, pl = pr - pillW, cy = ry + rh / 2;
+    c.strokeStyle = t.accent; c.lineWidth = 4 * s; c.beginPath(); c.moveTo(pr, cy); c.lineTo(rx - pd, cy); c.stroke();
+    c.save(); c.shadowColor = rgba(t.accent, 0.85); c.shadowBlur = 24 * s; rr(c, rx - pd, ry - pd, rw + pd * 2, rh + pd * 2, 12 * s); c.lineWidth = 5 * s; c.stroke(); c.restore();
+    rr(c, pl, cy - pillH / 2, pillW, pillH, pillH / 2); c.fillStyle = t.accent; c.fill();
+    c.fillStyle = inkOn(t.accent); c.textAlign = 'center'; c.fillText(label, pl + pillW / 2, cy + 9 * s); T(c, 0);
+    calloutL = pl - 50 * s;
+  }
+
+  // story on the left
+  const L = W * 0.07, maxW = Math.max(600 * s, calloutL - L);
+  const bullets = ev
+    ? ['Every date shows the days left on that day.', 'The date above the clock points to today’s number, so it never needs updating.', `Planned backward with Gemini: ${m.ms.length} milestones, one color per phase.`]
+    : ['Countdown, progress and the next milestone in one glance.', `Planned backward with Gemini: ${m.ms.length} milestones.`, 'Top third kept clear for the clock.'];
+  const hook = ev ? 'A countdown that never goes stale.' : `${m.daysLeft} days. ${m.ms.length} milestones. One plan.`;
+  const chips = [`${m.daysLeft} DAYS LEFT`, `${m.ms.length} MILESTONES`, `DUE ${MD(m.deadline)}`].map(x => t.lower ? x.toLowerCase() : x);
+  const run = (cx, y0) => {
+    let y = y0; cx.textAlign = 'left';
+    F(cx, { w: 700, f: t.body }, 27 * s); T(cx, (t.lower ? 0 : 7) * s); cx.fillStyle = t.muted;
+    cx.fillText(t.lower ? '// countdown lock screen' : 'COUNTDOWN LOCK SCREEN', L, y + 27 * s); T(cx, 0); y += 27 * s + 30 * s;
+    const text = (t.prefix || '') + (t.title.upper ? m.goal.toUpperCase() : m.goal), base = t.title.size * s * 1.7;
+    let size = base, lines;
+    for (let i = 0; i < 8; i++) { size = base * (1 - i * 0.06); F(cx, t.title, size); T(cx, (t.title.track || 0) * size); lines = wrap(cx, text, maxW, 3); if (lines.length <= 2 && !lines.some(l => l.endsWith('…'))) break; }
+    const asc = size * (t.title.asc || 0.78), lh = size * (t.title.lh || 1.06);
+    cx.fillStyle = t.text; lines.forEach((ln, i) => cx.fillText(ln, L, y + asc + i * lh)); T(cx, 0);
+    y += asc + (lines.length - 1) * lh + size * 0.3 + 18 * s;
+    F(cx, { w: 700, f: t.body }, 44 * s); cx.fillStyle = t.accent;
+    wrap(cx, hook, maxW, 2).forEach(ln => { cx.fillText(ln, L, y + 44 * s); y += 56 * s; });
+    y += 30 * s;
+    bullets.forEach(b => {
+      F(cx, { w: 500, f: t.body }, 31 * s); const ls = wrap(cx, b, maxW - 40 * s, 3);
+      rr(cx, L, y + 14 * s, 14 * s, 14 * s, 3 * s); cx.fillStyle = t.accent; cx.fill();
+      cx.fillStyle = t.text; ls.forEach((ln, i) => cx.fillText(ln, L + 40 * s, y + 31 * s + i * 43 * s));
+      y += ls.length * 43 * s + 20 * s;
+    });
+    y += 24 * s;
+    F(cx, { w: 700, f: t.body }, 21 * s); T(cx, (t.lower ? 0 : 3) * s);
+    let x = L; const chH = 54 * s;
+    chips.forEach(ch => {
+      const w = cx.measureText(ch).width + 44 * s; if (x + w > L + maxW) { x = L; y += chH + 14 * s; }
+      rr(cx, x, y, w, chH, chH / 2); cx.lineWidth = 2 * s; cx.strokeStyle = t.faint; cx.stroke(); cx.fillStyle = rgba(t.dark ? '#FFFFFF' : '#000000', 0.05); cx.fill();
+      cx.fillStyle = t.text; cx.textAlign = 'center'; cx.fillText(ch, x + w / 2, y + chH / 2 + 7.5 * s); cx.textAlign = 'left'; x += w + 14 * s;
+    });
+    T(cx, 0); y += chH;
+    return y - y0;
+  };
+  const th = run(DUMMY, 0); run(c, Math.max(H * 0.07, (H - th) / 2));
+  return m;
+}
+
+/* ============================== state ============================== */
+function DEMO(now) {
+  const today = startOfDay(now || new Date()), add = n => iso(addDays(today, n));
+  return {
+    goal: 'Final Project Demo', deadline: add(35) + 'T23:59', start: add(-6),
+    why: 'Future me is counting on present me.',
+    milestones: [
+      { date: add(-2), label: 'Lock scope + outline', done: true },
+      { date: add(4), label: 'Working prototype', done: false },
+      { date: add(12), label: 'User test with 5 people', done: false },
+      { date: add(21), label: 'Polish + write report', done: false },
+      { date: add(29), label: 'Rehearse demo 3×', done: false }
+    ],
+    theme: 'aurora', layout: 'calendar', device: 'iphone-std', remindAt: '20:00', scrim: 55, overlay: true, icsDone: false,
+    view: 'lock', ptitle: '', titleCustom: false, learned: '', desc: '', descCustom: false, gotLock: false, gotCover: false
+  };
+}
+const FONT_SPECS = ['700 40px "Space Grotesk"', '500 40px "Space Grotesk"', '600 40px "Space Grotesk"', '400 40px Anton', '400 40px "Instrument Serif"', 'italic 400 40px "Instrument Serif"',
+  '600 40px Fraunces', 'italic 400 40px Fraunces', 'italic 600 40px Fraunces', '400 40px Inter', '500 40px Inter', '600 40px Inter', '700 40px Inter', '800 40px Inter',
+  '400 40px "JetBrains Mono"', '700 40px "JetBrains Mono"', '800 40px "JetBrains Mono"'];
+const fontsReady = () => Promise.race([Promise.all(FONT_SPECS.map(f => document.fonts.load(f).catch(() => null))), new Promise(r => setTimeout(r, 4000))]);
+
+/* ============================== headless render mode ============================== */
+function bootRender() {
+  document.body.className = 'render'; document.body.innerHTML = '';
+  const st = DEMO(NOW());
+  ['theme', 'device', 'layout', 'goal', 'why', 'deadline'].forEach(k => { if (P.get(k)) st[k] = P.get(k); });
+  const cover = P.get('view') === 'cover', dev = cover ? COVER : (DEVICES[st.device] || DEVICES['iphone-std']), cv = document.createElement('canvas'); cv.width = dev.w; cv.height = dev.h; document.body.appendChild(cv);
+  const go = () => { try { (cover ? renderCover : renderLockscreen)(cv.getContext('2d'), dev.w, dev.h, st, null, NOW()); } catch (e) { document.body.insertAdjacentHTML('beforeend', `<pre style="position:fixed;top:0;left:0;color:#f55;font-size:32px;background:#000">${esc(e.stack)}</pre>`); } };
+  go(); fontsReady().then(go);
+}
+
+/* ============================== app UI ============================== */
+function bootUI() {
+  const $ = id => document.getElementById(id);
+  const canvas = $('canvas'), ctx = canvas.getContext('2d');
+  let bgImg = null, lastModel = null;
+
+  function load() {
+    try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw); if (s && typeof s === 'object') { const d = { ...DEMO(NOW()), ...s }; if (!THEMES[d.theme]) d.theme = 'aurora'; if (!DEVICES[d.device]) d.device = 'iphone-std'; if (!Array.isArray(d.milestones)) d.milestones = []; return d; } } } catch (e) { }
+    return DEMO(NOW());
+  }
+  let state = load();
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { } };
+  const toast = msg => { const el = $('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1800); };
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); toast('Copied'); }
+    catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Copied'); } catch (_) { toast('Copy failed: select the text and copy it'); } ta.remove(); }
+  }
+  const download = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); };
+  const slug = s => (s || 'deadline').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'deadline';
+
+  /* ----- fields ----- */
+  [['goal', 'goal'], ['deadline', 'deadline'], ['start', 'start'], ['why', 'why'], ['remindAt', 'remindAt']].forEach(([id, key]) => {
+    const el = $(id); el.value = state[key] ?? ''; el.addEventListener('input', () => { state[key] = el.value; schedule(); });
+  });
+  $('scrim').value = state.scrim; $('scrim').addEventListener('input', e => { state.scrim = +e.target.value; schedule(); });
+  $('showOverlay').checked = state.overlay !== false; $('showOverlay').addEventListener('change', e => { state.overlay = e.target.checked; schedule(); });
+
+  /* ----- milestones ----- */
+  function renderMs() {
+    const ol = $('milestones'); ol.innerHTML = '';
+    state.milestones.forEach((x, i) => {
+      const li = document.createElement('li'); if (x.done) li.className = 'done';
+      li.innerHTML = `<input type="checkbox" aria-label="Milestone ${i + 1} done"${x.done ? ' checked' : ''}><input type="date" aria-label="Milestone ${i + 1} date" value="${esc(x.date || '')}"><input type="text" aria-label="Milestone ${i + 1}" maxlength="40" placeholder="Short, checkable step" value="${esc(x.label || '')}"><button class="icon" aria-label="Remove milestone ${i + 1}" title="Remove">×</button>`;
+      const [cb, dt, tx, rm] = li.querySelectorAll('input,button');
+      cb.addEventListener('change', () => { x.done = cb.checked; li.classList.toggle('done', x.done); schedule(); });
+      dt.addEventListener('input', () => { x.date = dt.value; schedule(); });
+      dt.addEventListener('change', () => { sortMs(); renderMs(); schedule(); });
+      tx.addEventListener('input', () => { x.label = tx.value; schedule(); });
+      rm.addEventListener('click', () => { state.milestones.splice(i, 1); renderMs(); schedule(); });
+      ol.appendChild(li);
+    });
+    $('msEmpty').hidden = state.milestones.length > 0;
+  }
+  const sortMs = () => state.milestones.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
+  $('addMs').addEventListener('click', () => {
+    const m = model(state, NOW()), dates = state.milestones.map(x => parseDate(x.date)).filter(Boolean).sort((a, b) => b - a);
+    const lastD = dates[0] && dates[0] > m.today ? dates[0] : m.today;
+    const d = addDays(lastD, Math.max(1, Math.floor(diff(lastD, m.dDay) / 2)));
+    state.milestones.push({ date: iso(d > m.dDay ? m.dDay : d), label: '', done: false });
+    sortMs(); renderMs(); schedule();
+    const inputs = $('milestones').querySelectorAll('input[type=text]'); for (const el of inputs) if (!el.value) { el.focus(); break; }
+  });
+  $('spaceMs').addEventListener('click', () => {
+    const m = model(state, NOW()), from = m.today > m.start ? m.today : m.start, span = diff(from, m.dDay);
+    const todo = state.milestones.filter(x => !x.done).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    if (!todo.length) return toast('Nothing left to space out');
+    todo.forEach((x, k) => { x.date = iso(addDays(from, Math.max(1, Math.round((k + 1) * span / (todo.length + 1))))); });
+    sortMs(); renderMs(); schedule(); toast('Spread across the time you have left');
+  });
+
+  /* ----- design ----- */
+  const themeBox = $('themes');
+  THEME_ORDER.forEach(id => {
+    const t = THEMES[id], b = document.createElement('button');
+    b.className = 'theme'; b.setAttribute('role', 'radio'); b.dataset.id = id;
+    b.innerHTML = `<span class="sw" style="background:${t.swatch}"></span><span>${t.name}</span>`;
+    b.addEventListener('click', () => { state.theme = id; syncDesign(); schedule(); });
+    themeBox.appendChild(b);
+  });
+  Object.entries(DEVICES).forEach(([id, d]) => { const o = document.createElement('option'); o.value = id; o.textContent = `${d.label} · ${d.w}×${d.h}`; $('device').appendChild(o); });
+  $('device').value = state.device; $('device').addEventListener('change', e => { state.device = e.target.value; schedule(); });
+  $('layCal').addEventListener('click', () => { state.layout = 'calendar'; syncDesign(); schedule(); });
+  $('layClassic').addEventListener('click', () => { state.layout = 'classic'; syncDesign(); schedule(); });
+  function syncDesign() {
+    themeBox.querySelectorAll('.theme').forEach(b => b.setAttribute('aria-checked', String(b.dataset.id === state.theme)));
+    $('layCal').setAttribute('aria-pressed', String(state.layout !== 'classic'));
+    $('layClassic').setAttribute('aria-pressed', String(state.layout === 'classic'));
+  }
+  $('bgfile').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const im = new Image(); im.onload = () => { bgImg = im; $('bgControls').hidden = false; schedule(); }; im.onerror = () => toast('Could not read that image'); im.src = URL.createObjectURL(f);
+  });
+  $('clearBg').addEventListener('click', () => { bgImg = null; $('bgfile').value = ''; $('bgControls').hidden = true; schedule(); });
+
+  /* ----- export ----- */
+  function exportCanvas(kind) {
+    const d = kind === 'cover' ? COVER : DEVICES[state.device], cv = document.createElement('canvas'); cv.width = d.w; cv.height = d.h;
+    (kind === 'cover' ? renderCover : renderLockscreen)(cv.getContext('2d'), d.w, d.h, state, bgImg, NOW());
+    return cv;
+  }
+  async function saveLock() {
+    await fontsReady(); const d = DEVICES[state.device];
+    exportCanvas('lock').toBlob(b => { if (!b) return toast('Export failed'); download(b, `countdown-${slug(state.goal)}-${d.w}x${d.h}.png`); state.gotLock = true; schedule(); toast('Lock screen saved'); }, 'image/png');
+  }
+  async function saveCover() {
+    await fontsReady();
+    exportCanvas('cover').toBlob(b => { if (!b) return toast('Export failed'); download(b, `cover-${slug(state.goal)}-2400x1600.jpg`); state.gotCover = true; schedule(); toast('Cover saved (3:2, 2400 × 1600)'); }, 'image/jpeg', 0.92);
+  }
+  $('download').addEventListener('click', saveLock);
+  $('dlLock2').addEventListener('click', saveLock);
+  $('dlCover').addEventListener('click', saveCover);
+
+  /* ----- preview view + submit form ----- */
+  const setView = v => { state.view = v === 'cover' ? 'cover' : 'lock'; $('vLock').setAttribute('aria-pressed', String(state.view === 'lock')); $('vCover').setAttribute('aria-pressed', String(state.view === 'cover')); schedule(); };
+  $('vLock').addEventListener('click', () => setView('lock'));
+  $('vCover').addEventListener('click', () => setView('cover'));
+  $('viewCover').addEventListener('click', () => { setView('cover'); $('stage').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+  const defTitle = m => `${m.goal}: ${state.layout === 'classic' ? 'Countdown Lock Screen' : 'ToothOps Countdown'}`;
+  $('ptitle').value = state.titleCustom ? state.ptitle : '';
+  $('ptitle').addEventListener('input', e => { state.ptitle = e.target.value; state.titleCustom = !!e.target.value.trim(); schedule(); });
+  $('learned').value = state.learned || '';
+  $('learned').addEventListener('input', e => { state.learned = e.target.value; schedule(); });
+  $('desc').value = state.desc || '';
+  $('desc').addEventListener('input', e => { state.desc = e.target.value; state.descCustom = true; schedule(); });
+  $('regenDesc').addEventListener('click', () => { state.descCustom = false; schedule(); toast('Rewritten from your plan'); });
+  $('copyTitle').addEventListener('click', () => copy($('ptitle').value));
+  $('copyDesc').addEventListener('click', () => copy($('desc').value));
+  function updateForm(m) {
+    if (!state.titleCustom && document.activeElement !== $('ptitle')) $('ptitle').value = defTitle(m);
+    if (!state.descCustom && document.activeElement !== $('desc')) { state.desc = buildDesc(m, state); $('desc').value = state.desc; }
+    const title = $('ptitle').value.trim(), n = $('desc').value.length;
+    $('descCount').textContent = `${n}/500`; $('descCount').classList.toggle('over', n > 500);
+    const ok = [title.length > 0, !!state.gotLock, !!state.gotCover, n >= 80 && n <= 500];
+    document.querySelectorAll('#form > li').forEach((li, i) => li.classList.toggle('ok', !!ok[i]));
+    $('formScore').textContent = `${ok.filter(Boolean).length} / 4 ready`;
+  }
+  $('ics').addEventListener('click', () => {
+    const m = model(state, NOW());
+    download(new Blob([buildICS(state, m)], { type: 'text/calendar;charset=utf-8' }), `reminders-${slug(state.goal)}.ics`);
+    state.icsDone = true; schedule(); toast('Open the .ics file to add the reminders');
+  });
+  $('copyPlan').addEventListener('click', () => copy(planText(model(state, NOW()))));
+  $('reset').addEventListener('click', () => {
+    if (!confirm('Replace everything with the example? Your current goal and milestones will be lost.')) return;
+    state = DEMO(NOW()); ['goal', 'deadline', 'start', 'why', 'remindAt'].forEach(k => $(k).value = state[k]); $('device').value = state.device; $('scrim').value = state.scrim; $('showOverlay').checked = true;
+    $('ptitle').value = ''; $('learned').value = ''; $('desc').value = '';
+    renderMs(); syncDesign(); setView('lock');
+  });
+
+  /* ----- side panels ----- */
+  function updateSide(m) {
+    const t = THEMES[state.theme], sug = suggestTheme(m.goal), sb = $('suggest');
+    if (sug && sug.id !== state.theme) {
+      sb.hidden = false; sb.innerHTML = `<span>Style match for ${esc(sug.why)}: <b>${esc(THEMES[sug.id].name)}</b></span><button type="button">Use it</button>`;
+      sb.querySelector('button').onclick = () => { state.theme = sug.id; syncDesign(); schedule(); };
+    } else sb.hidden = true;
+    const C = checks(m);
+    $('checks').innerHTML = C.map(x => `<li class="${x.ok ? 'ok' : 'no'}"><span class="i">${x.ok ? '✓' : '!'}</span><span>${esc(x.label)}${!x.ok && x.tip ? `<small>${esc(x.tip)}</small>` : ''}</span></li>`).join('');
+    $('score').textContent = `${C.filter(x => x.ok).length} / ${C.length} ready`;
+    const P1 = prompts(m, t);
+    $('prompts').innerHTML = P1.map((p, i) => `<div><h3>${esc(p.title)}</h3><pre>${esc(p.text)}</pre><button data-p="${i}">Copy prompt</button></div>`).join('');
+    $('prompts').querySelectorAll('button').forEach(b => b.onclick = () => copy(P1[+b.dataset.p].text));
+    updateForm(m);
+    const dv = curDims(); $('sizeLabel').textContent = `${dv.w} × ${dv.h} px`;
+  }
+  function checks(m) {
+    const long = m.ms.filter(x => x.label.length > 26), last = m.ms[m.ms.length - 1];
+    const outside = m.all.length - m.ms.length;
+    return [
+      { ok: m.ms.length >= 3 && m.ms.length <= 6, label: '3–6 milestones that lead to the deadline', tip: m.ms.length < 3 ? 'Add a few checkpoints. Ask Gemini to work backward from the deadline.' : 'Merge some. More than 6 gets hard to read at a glance.' },
+      { ok: outside === 0 && m.all.length > 0, label: 'Every milestone lands before the deadline', tip: outside ? `${outside} milestone(s) fall after the deadline.` : 'Add milestones first.' },
+      { ok: m.ms.length > 0 && !long.length, label: 'Milestone names are short (26 characters max)', tip: long.length ? `Shorten: “${long[0].label}”` : '' },
+      { ok: !!last && diff(last.date, m.dDay) >= 2, label: '2+ day buffer before the deadline', tip: 'Finish the last milestone at least 2 days early. Things slip.' },
+      { ok: m.goal.length <= 30 && m.goal !== 'My deadline', label: 'Goal fits on one line', tip: 'Keep the goal under 30 characters.' },
+      { ok: !!m.why, label: 'A personal “why” line', tip: 'One honest sentence makes the design feel like it belongs to a real person.' },
+      { ok: !!state.icsDone, label: 'Daily reminders added to your calendar', tip: 'Use “Add reminders to calendar” below, or the Gemini reminder prompt.' },
+      { ok: true, label: 'Clock & widget zone kept clear (top 30%)' }
+    ];
+  }
+
+  /* ----- render loop ----- */
+  let raf = 0;
+  function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; draw(); }); }
+  const curDims = () => state.view === 'cover' ? COVER : DEVICES[state.device];
+  function draw() {
+    const d = curDims();
+    if (canvas.width !== d.w || canvas.height !== d.h) { canvas.width = d.w; canvas.height = d.h; }
+    fit();
+    try { lastModel = (state.view === 'cover' ? renderCover : renderLockscreen)(ctx, d.w, d.h, state, bgImg, NOW()); } catch (e) { console.error(e); }
+    updateOverlay(); if (lastModel) updateSide(lastModel); save();
+  }
+  function fit() {
+    const d = curDims(), cover = state.view === 'cover', stg = $('stage'), f = $('frame'), portrait = !cover && d.h > d.w;
+    const pw = Math.max(80, stg.clientWidth - (cover ? 64 : 120)), ph = Math.max(80, stg.clientHeight - 80), sc = Math.min(pw / d.w, ph / d.h);
+    const w = Math.floor(d.w * sc), h = Math.floor(d.h * sc);
+    f.style.width = w + 'px'; f.style.height = h + 'px';
+    f.classList.toggle('phone', portrait); f.classList.toggle('desk', !portrait && !cover); f.classList.toggle('cover', cover);
+    f.style.borderRadius = (cover ? 10 : portrait ? w * 0.13 : Math.max(6, w * 0.008)) + 'px';
+    f.style.setProperty('--bz', (cover ? 0 : portrait ? Math.max(5, w * 0.032) : Math.max(4, w * 0.008)) + 'px');
+  }
+  const SVG_FLASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 2h8v4l-2 4v12h-4V10L8 6z"/><path d="M12 13v2"/></svg>';
+  const SVG_CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>';
+  function updateOverlay() {
+    const dev = DEVICES[state.device], portrait = dev.h > dev.w, ov = $('overlay'), t = THEMES[state.theme];
+    ov.hidden = state.overlay === false || state.view === 'cover'; ov.style.setProperty('--ol', bgImg ? '#FFFFFF' : t.clock);
+    const now = new Date();
+    ov.innerHTML = portrait
+      ? `<div class="island"></div><div class="ol-date">${now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div><div class="ol-time">${now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(/\s?[AP]M/i, '')}</div><div class="ol-btn l">${SVG_FLASH}</div><div class="ol-btn r">${SVG_CAM}</div><div class="ol-home"></div>`
+      : `<div class="menubar"></div><div class="dock"></div>`;
+  }
+  new ResizeObserver(() => fit()).observe($('stage'));
+  setInterval(updateOverlay, 30000);
+
+  renderMs(); syncDesign(); setView(state.view); draw(); fontsReady().then(draw);
+}
+
+/* ============================== text exports ============================== */
+function planText(m) {
+  const L = [`🎯 Goal: ${m.goal}`, `📅 Deadline: ${longDate(m.deadline)} · ${time12(m.deadline)} (${m.daysLeft} day${m.daysLeft === 1 ? '' : 's'} left)`, '', '🧭 Plan, worked backward from the deadline:'];
+  m.ms.forEach(x => L.push(`${x.done ? '✅' : x.next ? '➡️' : '⬜'} ${md(x.date)} — ${x.label} (T–${x.left})`));
+  if (m.why) L.push('', `💡 Why: ${m.why}`);
+  return L.join('\n');
+}
+const fmt12 = hm => { const [h, mi] = (hm || '20:00').split(':').map(Number); return time12(new Date(2000, 0, 1, h || 0, mi || 0)); };
+function prompts(m, t) {
+  return [
+    { title: '1 · Plan backward with Gemini', text: `My most important deadline this month: "${m.goal}", due ${fullDate(m.deadline)} at ${time12(m.deadline)}. Today is ${fullDate(m.today)}.\n\nWork backward from the deadline and give me 4–6 milestones. For each one: a date, a concrete deliverable I can check off, and the first 30-minute action to start it. Leave at least a 2-day buffer before the deadline. Keep every milestone name under 26 characters so it fits on a phone lock screen.\n\nOther things on my plate: [classes, work shifts, other commitments]` },
+    { title: '2 · Design a background (attach 1–2 reference images)', text: `Create a tall 9:19.5 phone lock screen background: ${t.prompt}. Keep the top third calm and simple because the clock sits there, and keep the middle and lower half uncluttered so I can overlay a calendar countdown and a checklist. No text, no logos, no people. Mood: ${m.why || 'focused and hopeful'}. Match the colors and feel of the reference images I attached.` },
+    { title: '3 · Set reminders', text: `Remind me every evening until ${fullDate(m.dDay)}: "${m.goal}: check today's number on my lock screen and do one step."\nAlso remind me the morning before each milestone:\n${m.ms.filter(x => !x.done).map(x => `• ${md(x.date)}: ${x.label}`).join('\n') || '• (add milestones first)'}` }
+  ];
+}
+const DEFAULT_LEARNED = 'the real deadline is my first milestone, not the last day.';
+function buildDesc(m, st) {
+  let learned = (st.learned || '').trim() || DEFAULT_LEARNED;
+  learned = learned.charAt(0).toLowerCase() + learned.slice(1); if (!/[.!?]$/.test(learned)) learned += '.';
+  const n = m.ms.length, list = m.ms.map(x => x.label).join(', '), due = md(m.deadline);
+  const how = st.layout === 'classic'
+    ? 'I turned the plan into a lock screen with the countdown, my progress and the next milestone.'
+    : 'I turned the plan into a T-minus calendar lock screen: every date shows the days left on that day, so my phone’s date points to today’s number and it never goes stale.';
+  const variants = [
+    `My deadline: ${m.goal}, due ${due}. I gave Gemini the date and my schedule and asked it to work backward. It split the work into ${n} milestones with a buffer before the deadline: ${list}. ${how} One thing I learned: ${learned}`,
+    `My deadline: ${m.goal}, due ${due}. Gemini worked backward from the date and split it into ${n} milestones with a buffer: ${list}. ${how} One thing I learned: ${learned}`,
+    `My deadline: ${m.goal}, due ${due}. Gemini worked backward from the date and split it into ${n} milestones with a buffer before the deadline. ${how} One thing I learned: ${learned}`,
+    `Deadline: ${m.goal}, due ${due}. Gemini worked backward and split it into ${n} milestones. ${how} Learned: ${learned}`
+  ];
+  const fit = variants.find(v => v.length <= 500);
+  return fit || variants[variants.length - 1].slice(0, 499) + '…';
+}
+function buildICS(st, m) {
+  const icsEsc = s => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  const fold = line => { const ch = Array.from(line), out = []; for (let i = 0; i < ch.length; i += 70) out.push((i ? ' ' : '') + ch.slice(i, i + 70).join('')); return out.join('\r\n'); };
+  const local = d => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const base = Date.now().toString(36);
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ToothOps Countdown//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${icsEsc('Countdown: ' + m.goal)}`];
+  const ev = o => {
+    L.push('BEGIN:VEVENT', `UID:${o.k}-${base}@toothops-countdown`, `DTSTAMP:${stamp}`, `DTSTART:${local(o.start)}`, `DURATION:${o.dur}`, `SUMMARY:${icsEsc(o.title)}`, `DESCRIPTION:${icsEsc(o.desc)}`);
+    if (o.rrule) L.push(o.rrule);
+    (o.alarms || []).forEach(a => L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEsc(o.title)}`, `TRIGGER:${a}`, 'END:VALARM'));
+    L.push('END:VEVENT');
+  };
+  const [hh, mm] = (st.remindAt || '20:00').split(':').map(Number);
+  let first = new Date(m.today.getFullYear(), m.today.getMonth(), m.today.getDate(), hh || 0, mm || 0);
+  if (first < m.now) first = new Date(m.today.getFullYear(), m.today.getMonth(), m.today.getDate() + 1, hh || 0, mm || 0);
+  if (first <= m.deadline) ev({ k: 'daily', start: first, dur: 'PT15M', title: `⏳ ${m.goal}: one step today`, desc: planText(m) + '\n\nGlance at your lock screen, find today, do the next step.', rrule: `RRULE:FREQ=DAILY;UNTIL=${local(new Date(m.dDay.getFullYear(), m.dDay.getMonth(), m.dDay.getDate(), 23, 59))}`, alarms: ['PT0M'] });
+  m.ms.filter(x => !x.done && x.date >= m.today).forEach((x, i) => ev({ k: 'ms' + i, start: new Date(x.date.getFullYear(), x.date.getMonth(), x.date.getDate(), 9, 0), dur: 'PT30M', title: `🎯 ${x.label} (T–${x.left})`, desc: `Milestone ${x.i + 1} for “${m.goal}”. Deadline: ${longDate(m.deadline)} at ${time12(m.deadline)}.`, alarms: ['-P1D', 'PT0M'] }));
+  ev({ k: 'deadline', start: new Date(m.deadline.getTime() - 3600e3), dur: 'PT1H', title: `🚨 DEADLINE: ${m.goal}`, desc: `Due ${longDate(m.deadline)} at ${time12(m.deadline)}.`, alarms: ['-P1D', '-PT3H'] });
+  L.push('END:VCALENDAR');
+  return L.map(fold).join('\r\n') + '\r\n';
+}
+
+if (RENDER) bootRender(); else bootUI();
+</script>
+</body>
+</html>
